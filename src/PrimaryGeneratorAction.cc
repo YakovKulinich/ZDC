@@ -44,27 +44,27 @@
 
 PrimaryGeneratorAction::PrimaryGeneratorAction()
 : G4VUserPrimaryGeneratorAction(),
-  fParticleGun(0), 
-  fEnvelopeBox(0)
+  m_particleGun(0), 
+  m_moduleBox(0)
 {
   G4int n_particle = 1;
-  fParticleGun  = new G4ParticleGun(n_particle);
+  m_particleGun  = new G4ParticleGun(n_particle);
 
   // default particle kinematic
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
   G4String particleName;
   G4ParticleDefinition* particle
     = particleTable->FindParticle(particleName="gamma");
-  fParticleGun->SetParticleDefinition(particle);
-  fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));
-  fParticleGun->SetParticleEnergy(6.*MeV);
+  m_particleGun->SetParticleDefinition(particle);
+  m_particleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,-1.));
+  m_particleGun->SetParticleEnergy(6.*MeV);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 PrimaryGeneratorAction::~PrimaryGeneratorAction()
 {
-  delete fParticleGun;
+  delete m_particleGun;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -75,40 +75,42 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   //
 
   // In order to avoid dependence of PrimaryGeneratorAction
-  // on DetectorConstruction class we get Envelope volume
+  // on DetectorConstruction class we get Module volume
   // from G4LogicalVolumeStore.
   
-  G4double envSizeXY = 0;
-  G4double envSizeZ = 0;
+  G4double moduleSizeX = 0;
+  G4double moduleSizeY = 0;
+  G4double moduleSizeZ = 0;
 
-  if (!fEnvelopeBox)
+  if ( !m_moduleBox )
   {
-    G4LogicalVolume* envLV
-      = G4LogicalVolumeStore::GetInstance()->GetVolume("Envelope");
-    if ( envLV ) fEnvelopeBox = dynamic_cast<G4Box*>(envLV->GetSolid());
+    G4LogicalVolume* moduleLV
+      = G4LogicalVolumeStore::GetInstance()->GetVolume("Module");
+    if ( moduleLV ) m_moduleBox = dynamic_cast<G4Box*>(moduleLV->GetSolid());
   }
 
-  if ( fEnvelopeBox ) {
-    envSizeXY = fEnvelopeBox->GetXHalfLength()*2.;
-    envSizeZ = fEnvelopeBox->GetZHalfLength()*2.;
+  if ( m_moduleBox ) {
+    moduleSizeX = m_moduleBox->GetXHalfLength()*2.;
+    moduleSizeY = m_moduleBox->GetYHalfLength()*2.;
+    moduleSizeZ = m_moduleBox->GetZHalfLength()*2.;
   }  
   else  {
     G4ExceptionDescription msg;
-    msg << "Envelope volume of box shape not found.\n"; 
+    msg << "Module volume of box shape not found.\n"; 
     msg << "Perhaps you have changed geometry.\n";
     msg << "The gun will be place at the center.";
     G4Exception("PrimaryGeneratorAction::GeneratePrimaries()",
      "MyCode0002",JustWarning,msg);
   }
 
-  G4double size = 0.8; 
-  G4double x0 = size * envSizeXY * (G4UniformRand()-0.5);
-  G4double y0 = size * envSizeXY * (G4UniformRand()-0.5);
-  G4double z0 = -0.5 * envSizeZ;
+  G4double size = 0.25; 
+  G4double x0 = size * moduleSizeX * (G4UniformRand()-0.5);
+  G4double y0 = size * moduleSizeY * (G4UniformRand()-0.5);
+  G4double z0 = 0.55 * moduleSizeZ;
   
-  fParticleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
+  m_particleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
 
-  fParticleGun->GeneratePrimaryVertex(anEvent);
+  m_particleGun->GeneratePrimaryVertex(anEvent);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

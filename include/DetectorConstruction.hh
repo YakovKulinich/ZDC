@@ -34,23 +34,54 @@
 #include "G4VUserDetectorConstruction.hh"
 #include "globals.hh"
 
+#include <vector>
+
+class G4Box;
 class G4VPhysicalVolume;
 class G4LogicalVolume;
+
+class SharedData;
 
 /// Detector construction class to define materials and geometry.
 
 class DetectorConstruction : public G4VUserDetectorConstruction
 {
-  public:
-    DetectorConstruction();
-    virtual ~DetectorConstruction();
+public:
+  DetectorConstruction();
+  DetectorConstruction( SharedData* );
+  virtual ~DetectorConstruction();
 
-    virtual G4VPhysicalVolume* Construct();
+  virtual G4VPhysicalVolume* Construct();
     
-    G4LogicalVolume* GetScoringVolume() const { return fScoringVolume; }
+  G4LogicalVolume* GetScoringVolume() const { return m_scoringVolume; }
 
-  protected:
-    G4LogicalVolume*  fScoringVolume;
+  double ComputePlacementParameters( double[2] );
+  
+protected:
+  G4Box*             m_solidWorld;
+  G4LogicalVolume*   m_logicWorld;
+  G4VPhysicalVolume* m_physWorld;
+
+  G4Box*             m_solidBox;
+  G4LogicalVolume*   m_logicBox;
+  G4VPhysicalVolume* m_physBox;
+  
+  G4Box*             m_solidOil;
+  G4LogicalVolume*   m_logicOil;
+  G4VPhysicalVolume* m_physOil;
+
+  std::vector<G4Box*>              m_v_solidQuartz;
+  std::vector<G4LogicalVolume*>    m_v_logicQuartz;
+  std::vector<G4VPhysicalVolume*>  m_v_physQuartz;
+  
+  std::vector<G4Box*>              m_v_solidAbsorber;
+  std::vector<G4LogicalVolume*>    m_v_logicAbsorber;
+  std::vector<G4VPhysicalVolume*>  m_v_physAbsorber;
+  
+protected:
+  G4LogicalVolume*  m_scoringVolume;
+  SharedData*       m_sd;
+  
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

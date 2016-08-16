@@ -29,6 +29,7 @@
 /// \brief Implementation of the DetectorConstruction class
 
 #include "DetectorConstruction.hh"
+#include "SharedData.hh"
 
 #include "G4RunManager.hh"
 #include "G4NistManager.hh"
@@ -40,12 +41,26 @@
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4VisAttributes.hh"
+#include "G4Colour.hh"
+
+#include <iostream>
+#include <stdio.h>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 DetectorConstruction::DetectorConstruction()
-: G4VUserDetectorConstruction(),
-  fScoringVolume(0)
+  : G4VUserDetectorConstruction(),
+    m_scoringVolume(0),
+    m_sd(NULL)
+{ }
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+DetectorConstruction::DetectorConstruction( SharedData* sd )
+  : G4VUserDetectorConstruction(),
+    m_scoringVolume(0),
+    m_sd( sd )
 { }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -56,133 +71,186 @@ DetectorConstruction::~DetectorConstruction()
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 G4VPhysicalVolume* DetectorConstruction::Construct()
-{  
+{
+  // Get Config
+  TEnv* config = m_sd->GetConfig();
+  
   // Get nist material manager
   G4NistManager* nist = G4NistManager::Instance();
   
-  // Envelope parameters
-  //
-  G4double env_sizeXY = 20*cm, env_sizeZ = 30*cm;
-  G4Material* env_mat = nist->FindOrBuildMaterial("G4_WATER");
-   
   // Option to switch on/off checking of volumes overlaps
   //
   G4bool checkOverlaps = true;
 
-  //     
-  // World
-  //
-  G4double world_sizeXY = 1.2*env_sizeXY;
-  G4double world_sizeZ  = 1.2*env_sizeZ;
-  G4Material* world_mat = nist->FindOrBuildMaterial("G4_AIR");
+  // Box dimensions
+  G4double boxSizeX     = config->GetValue( "boxSizeX", 90);
+  G4double boxSizeY     = config->GetValue( "boxSizeY", 240);
+  G4double boxSizeZ     = config->GetValue( "boxSizeZ", 150);
   
-  G4Box* solidWorld =    
+  //----------------------------------------------     
+  // World
+  //----------------------------------------------
+  G4double world_sizeX  = 1.2 * boxSizeX;   // mm
+  G4double world_sizeY  = 1.2 * boxSizeY;   // mm
+  G4double world_sizeZ  = 1.2 * boxSizeZ;   // mm
+  
+  printf( "Building world with %5.1f x %5.1f x %5.1f\n",
+	  world_sizeX, world_sizeY, world_sizeZ );
+  
+  m_solidWorld =    
     new G4Box("World",                       //its name
-       0.5*world_sizeXY, 0.5*world_sizeXY, 0.5*world_sizeZ);     //its size
-      
-  G4LogicalVolume* logicWorld =                         
-    new G4LogicalVolume(solidWorld,          //its solid
-                        world_mat,           //its material
+	      0.5*world_sizeX, 0.5*world_sizeY, 0.5*world_sizeZ);   //its size
+
+  G4Material* g4Air = nist->FindOrBuildMaterial("G4_AIR");
+  
+  m_logicWorld =                         
+    new G4LogicalVolume(m_solidWorld,        //its solid
+                        g4Air,           //its material
                         "World");            //its name
                                    
-  G4VPhysicalVolume* physWorld = 
+  m_physWorld = 
     new G4PVPlacement(0,                     //no rotation
                       G4ThreeVector(),       //at (0,0,0)
-                      logicWorld,            //its logical volume
+                      m_logicWorld,          //its logical volume
                       "World",               //its name
                       0,                     //its mother  volume
                       false,                 //no boolean operation
                       0,                     //copy number
                       checkOverlaps);        //overlaps checking
                      
-  //     
-  // Envelope
-  //  
-  G4Box* solidEnv =    
-    new G4Box("Envelope",                    //its name
-        0.5*env_sizeXY, 0.5*env_sizeXY, 0.5*env_sizeZ); //its size
-      
-  G4LogicalVolume* logicEnv =                         
-    new G4LogicalVolume(solidEnv,            //its solid
-                        env_mat,             //its material
-                        "Envelope");         //its name
-               
-  new G4PVPlacement(0,                       //no rotation
-                    G4ThreeVector(),         //at (0,0,0)
-                    logicEnv,                //its logical volume
-                    "Envelope",              //its name
-                    logicWorld,              //its mother  volume
-                    false,                   //no boolean operation
-                    0,                       //copy number
-                    checkOverlaps);          //overlaps checking
- 
-  //     
-  // Shape 1
-  //  
-  G4Material* shape1_mat = nist->FindOrBuildMaterial("G4_A-150_TISSUE");
-  G4ThreeVector pos1 = G4ThreeVector(0, 2*cm, -7*cm);
-        
-  // Conical section shape       
-  G4double shape1_rmina =  0.*cm, shape1_rmaxa = 2.*cm;
-  G4double shape1_rminb =  0.*cm, shape1_rmaxb = 4.*cm;
-  G4double shape1_hz = 3.*cm;
-  G4double shape1_phimin = 0.*deg, shape1_phimax = 360.*deg;
-  G4Cons* solidShape1 =    
-    new G4Cons("Shape1", 
-    shape1_rmina, shape1_rmaxa, shape1_rminb, shape1_rmaxb, shape1_hz,
-    shape1_phimin, shape1_phimax);
-                      
-  G4LogicalVolume* logicShape1 =                         
-    new G4LogicalVolume(solidShape1,         //its solid
-                        shape1_mat,          //its material
-                        "Shape1");           //its name
-               
-  new G4PVPlacement(0,                       //no rotation
-                    pos1,                    //at position
-                    logicShape1,             //its logical volume
-                    "Shape1",                //its name
-                    logicEnv,                //its mother  volume
-                    false,                   //no boolean operation
-                    0,                       //copy number
-                    checkOverlaps);          //overlaps checking
+  //----------------------------------------------     
+  // Box
+  //---------------------------------------------- 
+  m_solidBox =    
+    new G4Box("Box",                         //its name
+	      0.5*boxSizeX, 0.5*boxSizeY, 0.5*boxSizeZ);  //its size
 
-  //     
-  // Shape 2
-  //
-  G4Material* shape2_mat = nist->FindOrBuildMaterial("G4_BONE_COMPACT_ICRU");
-  G4ThreeVector pos2 = G4ThreeVector(0, -1*cm, 7*cm);
+  G4Material* g4Al = nist->FindOrBuildMaterial("G4_Al");
+  
+  m_logicBox =                         
+    new G4LogicalVolume(m_solidBox,          //its solid
+                        g4Air,           //its material
+                        "Box");              //its name
+                                   
+  m_physBox = 
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(),       //at (0,0,0)
+                      m_logicBox,            //its logical volume
+                      "Box",                 //its name
+                      m_logicWorld,          //its mother  volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+                     
+  //----------------------------------------------     
+  // Quartz
+  //----------------------------------------------
+  G4double quartzThickness = config->GetValue( "quartzThickness", 2);
+  G4double boxThickness = config->GetValue( "boxThickness", 2);
 
-  // Trapezoid shape       
-  G4double shape2_dxa = 12*cm, shape2_dxb = 12*cm;
-  G4double shape2_dya = 10*cm, shape2_dyb = 16*cm;
-  G4double shape2_dz  = 6*cm;      
-  G4Trd* solidShape2 =    
-    new G4Trd("Shape2",                      //its name
-              0.5*shape2_dxa, 0.5*shape2_dxb, 
-              0.5*shape2_dya, 0.5*shape2_dyb, 0.5*shape2_dz); //its size
-                
-  G4LogicalVolume* logicShape2 =                         
-    new G4LogicalVolume(solidShape2,         //its solid
-                        shape2_mat,          //its material
-                        "Shape2");           //its name
-               
-  new G4PVPlacement(0,                       //no rotation
-                    pos2,                    //at position
-                    logicShape2,             //its logical volume
-                    "Shape2",                //its name
-                    logicEnv,                //its mother  volume
-                    false,                   //no boolean operation
-                    0,                       //copy number
-                    checkOverlaps);          //overlaps checking
-                
-  // Set Shape2 as scoring volume
+  std::vector< std::pair<G4double, G4double> > quartzCenters;
+  quartzCenters.emplace_back( 0,  0.5*boxSizeY - boxThickness - 0.5*quartzThickness ); // top
+  quartzCenters.emplace_back( 0, -0.5*boxSizeY + boxThickness + 0.5*quartzThickness ); // bottom
+  quartzCenters.emplace_back( -0.5*boxSizeX + boxThickness + 0.5*quartzThickness, 0 ); // left
+  quartzCenters.emplace_back(  0.5*boxSizeX - boxThickness - 0.5*quartzThickness, 0 ); // right
+  
+  std::vector< std::pair<G4double, G4double> > quartzSizeXY;
+  quartzSizeXY.emplace_back( boxSizeX - 2*boxThickness - 2*quartzThickness,
+			     quartzThickness );          // top
+  quartzSizeXY.emplace_back( boxSizeX - 2*boxThickness - 2*quartzThickness,
+			     quartzThickness );          // bottom
+  quartzSizeXY.emplace_back( quartzThickness,
+			     boxSizeY - 2*boxThickness); // left
+  quartzSizeXY.emplace_back( quartzThickness,
+			     boxSizeY - 2*boxThickness); // right
+  
+  G4double quartzSizeZ = boxSizeZ - 2*boxThickness;
+
+  G4Material* g4SiO2 = nist->FindOrBuildMaterial("G4_SILICON_DIOXIDE");
+  G4VisAttributes* quartzColor = new G4VisAttributes( G4Colour::Blue() );
+  
+  for( unsigned int qn = 0; qn < quartzCenters.size(); qn++ ){
+    m_v_solidQuartz.
+      push_back( new G4Box("Quartz",            //its name
+			   0.5*quartzSizeXY.at(qn).first,
+			   0.5*quartzSizeXY.at(qn).second,
+			   0.5*quartzSizeZ) );  //its size
+    
+    m_v_logicQuartz.
+      push_back( new G4LogicalVolume(m_v_solidQuartz.back(), //its solid
+				     g4SiO2,                 //its material
+				     "Quartz") );            //its name
+
+    m_v_logicQuartz.back()->SetVisAttributes( quartzColor );
+    
+    m_v_physQuartz.
+      push_back( new G4PVPlacement(0,                       //no rotation
+				   G4ThreeVector(quartzCenters.at(qn).first,
+						 quartzCenters.at(qn).second,
+						 0),
+				   m_v_logicQuartz.back(),  //its logical volume
+				   "Quartz",                //its name
+				   m_logicBox,              //its mother  volume
+				   false,                   //no boolean operation
+				   qn,                      //copy number
+				   checkOverlaps) );        //overlaps checking
+  }
+
+  //----------------------------------------------     
+  // Oil
+  //----------------------------------------------
+  G4double oilSizeX     = boxSizeX - 2*boxThickness - 2*quartzThickness;
+  G4double oilSizeY     = boxSizeY - 2*boxThickness - 2*quartzThickness;
+  G4double oilSizeZ     = boxSizeZ - 2*boxThickness - 2*quartzThickness;
+
+  std::cout << oilSizeX << " --- " << oilSizeY << " --- " << oilSizeZ << std::endl;
+  
+  m_solidOil =    
+    new G4Box("Oil",                         //its name
+	      0.5*oilSizeX, 0.5*oilSizeY, 0.5*oilSizeZ);  // its size
+  
+  m_logicOil =                         
+    new G4LogicalVolume(m_solidOil,          //its solid
+                        g4Air,               //its material
+                        "Oil");              //its name
+  
+  m_physOil = 
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(),       //at (0,0,0)
+                      m_logicOil,            //its logical volume
+                      "Oil",                 //its name
+                      m_logicBox,            //its mother  volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+  
+  G4VisAttributes* oilColor = new G4VisAttributes( G4Colour::Magenta() );
+  m_logicOil->SetVisAttributes( oilColor );
+
+  
+  /*
+  //----------------------------------------------     
+  // Plates
+  //----------------------------------------------
+  double xPts[4]; double yPts[4];
+
+  double absorberThicknessZ = config->GetValue( "absorberThicknessZ", 5 );
+  double      gapThicknessZ = config->GetValue( "gapThicknessZ", 10 );
+
+  double thickness = absorberThicknessZ * cos(theta);
+  double       gap =      gapThicknessZ * cos(theta);
+  */
+  
+  // Set Box as scoring volume
   //
-  fScoringVolume = logicShape2;
+  m_scoringVolume = m_logicBox;
 
   //
   //always return the physical World
   //
-  return physWorld;
+  return m_physWorld;
 }
+
+double DetectorConstruction :: ComputePlacementParameters( double center[2] ) {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

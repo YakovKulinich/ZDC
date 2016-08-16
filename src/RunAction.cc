@@ -149,6 +149,7 @@ void RunAction::EndOfRunAction(const G4Run* run)
      << "------------------------------------------------------------"
      << G4endl
      << G4endl;
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -30,13 +30,9 @@
 
 #include "DetectorConstruction.hh"
 #include "ActionInitialization.hh"
+#include "SharedData.hh"
 
-#ifdef G4MULTITHREADED
-#include "G4MTRunManager.hh"
-#else
-#include "G4RunManager.hh"
-#endif
-
+#include "MyRunManager.hh"
 #include "G4UImanager.hh"
 #include "QBBC.hh"
 
@@ -44,6 +40,9 @@
 #include "G4UIExecutive.hh"
 
 #include "Randomize.hh"
+
+#include <TString.h>
+#include <iostream>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -58,20 +57,30 @@ int main(int argc,char** argv)
 
   // Choose the Random engine
   G4Random::setTheEngine(new CLHEP::RanecuEngine);
-  
-  // Construct the default run manager
-  //
-#ifdef G4MULTITHREADED
-  G4MTRunManager* runManager = new G4MTRunManager;
-#else
-  G4RunManager* runManager = new G4RunManager;
-#endif
 
+  // Get some arguments for RunManager
+  TString cfgName = "config/config.cfg";
+  if( argc == 3 ){
+    TString arg;
+    arg = TString( argv[2] );
+    if( arg.Contains("config") || arg.Contains("cfg") )
+      cfgName = arg;
+  }
+    
+  std::string outputName = "myOut.root";
+  
+  // Create SharedData and Run Manager
+  SharedData* sharedData = new SharedData( outputName, cfgName.Data() );
+  sharedData->Initialize();
+  
+  MyRunManager* runManager = new MyRunManager( sharedData );
+  //G4RunManager* runManager = new G4RunManager();
+  
   // Set mandatory initialization classes
   //
   // Detector construction
-  runManager->SetUserInitialization(new DetectorConstruction());
-
+  runManager->SetUserInitialization(new DetectorConstruction( sharedData ) );
+  
   // Physics list
   G4VModularPhysicsList* physicsList = new QBBC;
   physicsList->SetVerboseLevel(1);
@@ -109,9 +118,14 @@ int main(int argc,char** argv)
   // Free the store: user actions, physics_list and detector_description are
   // owned and deleted by the run manager, so they should not be deleted 
   // in the main() program !
+  sharedData->Finalize();
+  std::cerr << "\nAbout to delete sharedData - " << sharedData << std::endl;  
+  // WHY THIS NOT WORKING???
+  // delete sharedData; 
   
   delete visManager;
   delete runManager;
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo.....
