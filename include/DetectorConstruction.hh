@@ -55,7 +55,8 @@ public:
     
   G4LogicalVolume* GetScoringVolume() const { return m_scoringVolume; }
 
-  double ComputePlacementParameters( double[2] );
+  void ComputeDiagonalGeo( std::vector< std::pair< G4double, G4double > >&,
+			   std::vector<G4double>& );
   
 protected:
   G4Box*             m_solidWorld;
@@ -73,6 +74,10 @@ protected:
   std::vector<G4Box*>              m_v_solidQuartz;
   std::vector<G4LogicalVolume*>    m_v_logicQuartz;
   std::vector<G4VPhysicalVolume*>  m_v_physQuartz;
+
+  std::vector<G4Box*>              m_v_solidReflector;
+  std::vector<G4LogicalVolume*>    m_v_logicReflector;
+  std::vector<G4VPhysicalVolume*>  m_v_physReflector;
   
   std::vector<G4Box*>              m_v_solidAbsorber;
   std::vector<G4LogicalVolume*>    m_v_logicAbsorber;

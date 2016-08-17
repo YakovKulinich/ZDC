@@ -167,6 +167,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double quartzSizeZ = boxSizeZ - 2*boxThickness;
 
   G4Material* g4SiO2 = nist->FindOrBuildMaterial("G4_SILICON_DIOXIDE");
+  
   G4VisAttributes* quartzColor = new G4VisAttributes( G4Colour::Blue() );
   
   for( unsigned int qn = 0; qn < quartzCenters.size(); qn++ ){
@@ -201,17 +202,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //----------------------------------------------
   G4double oilSizeX     = boxSizeX - 2*boxThickness - 2*quartzThickness;
   G4double oilSizeY     = boxSizeY - 2*boxThickness - 2*quartzThickness;
-  G4double oilSizeZ     = boxSizeZ - 2*boxThickness - 2*quartzThickness;
+  G4double oilSizeZ     = boxSizeZ - 2*boxThickness;
 
-  std::cout << oilSizeX << " --- " << oilSizeY << " --- " << oilSizeZ << std::endl;
-  
   m_solidOil =    
     new G4Box("Oil",                         //its name
 	      0.5*oilSizeX, 0.5*oilSizeY, 0.5*oilSizeZ);  // its size
+
+  G4Material* g4H2O  = nist->FindOrBuildMaterial("G4_WATER");
   
   m_logicOil =                         
     new G4LogicalVolume(m_solidOil,          //its solid
-                        g4Air,               //its material
+                        g4H2O,               //its material
                         "Oil");              //its name
   
   m_physOil = 
@@ -227,19 +228,57 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4VisAttributes* oilColor = new G4VisAttributes( G4Colour::Magenta() );
   m_logicOil->SetVisAttributes( oilColor );
 
-  
-  /*
   //----------------------------------------------     
   // Plates
   //----------------------------------------------
-  double xPts[4]; double yPts[4];
+  double reflectorThickness = config->GetValue( "reflectorThickness", 0.1 );
+  double              theta = config->GetValue( "absorberTheta", 0.5 );
+  
+  std::vector< std::pair< G4double, G4double > > absorberCenters;
+  std::vector< G4double > absorberLengths;
+  
+  ComputeDiagonalGeo( absorberCenters, absorberLengths );
 
-  double absorberThicknessZ = config->GetValue( "absorberThicknessZ", 5 );
-  double      gapThicknessZ = config->GetValue( "gapThicknessZ", 10 );
+  G4RotationMatrix* rotAbsorber = new G4RotationMatrix();
+  rotAbsorber->rotateY( theta*rad);
 
-  double thickness = absorberThicknessZ * cos(theta);
-  double       gap =      gapThicknessZ * cos(theta);
-  */
+  double absorberSizeY = boxSizeY - 2*boxThickness - 2*quartzThickness;
+  double absorberSizeZ = absorberThicknessZ * TMath::Cos( theta );
+  double totalSizeZ    = absorberSizeZ + 2*reflectorThickness;
+  
+  G4Element* g4elW = nist->FindOrBuildElement("W");
+  G4Material* matW = new G4Material("Tungsten", 19.25 * g/cm3, 1);
+  matW->AddElement(g4elW, 1);
+
+  G4VisAttributes* absorberColor = new G4VisAttributes( G4Colour::Red() );
+  
+  for( unsigned int sn = 0; sn < absorberCenters.size(); sn++ ){
+    m_v_solidAbsorber.
+      push_back( new G4Box("Absorber",            //its name
+			   0.5*absorberLengths.at(sn),
+			   0.5*absorberSizeY,
+			   0.5*totalSizeZ) );  //its size
+
+    m_v_logicAbsorber.
+      push_back( new G4LogicalVolume(m_v_solidAbsorber.back(), //its solid
+				     matW,                     //its material
+				     "Absorber") );            //its name
+
+    m_v_logicAbsorber.back()->SetVisAttributes( absorberColor );
+    
+    m_v_physAbsorber.
+      push_back( new G4PVPlacement(rotAbsorber,                //no rotation
+				   G4ThreeVector(absorberCenters.at(sn).first,
+						 0,
+						 absorberCenters.at(sn).second),
+				   m_v_logicAbsorber.back(),  //its logical volume
+				   "Absorber",                //its name
+				   m_logicOil,                //its mother  volume
+				   false,                     //no boolean operation
+				   sn,                        //copy number
+				   checkOverlaps) );          //overlaps checking
+  }
+
   
   // Set Box as scoring volume
   //
@@ -251,6 +290,112 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   return m_physWorld;
 }
 
-double DetectorConstruction :: ComputePlacementParameters( double center[2] ) {}
+void DetectorConstruction ::
+ComputeDiagonalGeo( std::vector<std::pair< G4double, G4double > >& centers,
+		    std::vector<G4double>& lengths )
+{
+  TEnv* config = m_sd->GetConfig();
+
+  G4double boxSizeX     = config->GetValue( "boxSizeX", 90);
+  G4double boxSizeY     = config->GetValue( "boxSizeY", 240);
+  G4double boxSizeZ     = config->GetValue( "boxSizeZ", 150);
+  
+  G4double quartzThickness  = config->GetValue( "quartzThickness", 2);
+  G4double boxThickness     = config->GetValue( "boxThickness", 2);
+
+  double reflectorThickness = config->GetValue( "reflectorThickness", 0.1 );
+  
+  double             length = boxSizeZ - 2*boxThickness;
+  double              width = boxSizeX - 2*(boxThickness + quartzThickness + reflectorThickness);
+
+  printf("length = %5.1f     width = %5.1f\n", length, width);
+  
+  double absorberThicknessZ = config->GetValue( "absorberThicknessZ", 5 );
+  double      gapThicknessZ = config->GetValue( "gapThicknessZ", 10 );
+  double              theta = config->GetValue( "absorberTheta", 0.5 );
+  double             deltaX = config->GetValue( "absorberDeltaX", 10 );
+  
+  double thickness = absorberThicknessZ * cos(theta) + 2*reflectorThickness;
+  double       gap =      gapThicknessZ * cos(theta);
+
+  double tanTheta   = TMath::Tan( theta );
+  double widthPrime = width/TMath::Cos( theta ); //- thickness * tanTheta; 
+  printf( "widthPrime = %f\n", widthPrime );
+  
+  double yStep = ( thickness + gap ) / TMath::Cos( theta ); 
+  printf( "yStep = %f\n", yStep );
+  
+  double dz    = thickness * TMath::Cos( theta );
+  double dx    = thickness * TMath::Sin( theta );
+  printf( "dx = %f      dz = %f\n", dx, dz );
+  
+  double z0    = length/2 - tanTheta * ( width/2 + deltaX );
+  printf( "z0 = %f\n", z0 );
+    
+  while( z0 > -0.5 * length ){
+    printf("\n-----Panel-----\n");
+    double x0 = -0.5 * width;
+    
+    double z1 = z0 + widthPrime * TMath::Sin( theta );
+    double x1 = 0.5 * width - dx;
+    
+    double z2 = z1 - dz;
+    double x2 = 0.5 * width;
+
+    double z3 = z0 - dz;
+    double x3 = - 0.5 * width + dx;
+
+    // test bad cases
+    if( ( z1 > 0.5 * length ) && ( z2 >= 0.5 * length ) ){
+      z1 = length / 2;
+      x1 = ( z1 - z0 ) / TMath::Tan( theta ) - width / 2;
+
+      z2 = z1 - dz;
+      x2 = x1 + dx;
+    }
+    else if( ( z1 >= 0.5 * length ) && ( z2 < 0.5 * length ) ){
+      z0  = length / 2 - TMath::Tan( theta ) * ( width - dx );
+      
+      z1  = length / 2;
+      x1  = width / 2 - dx;
+
+      z2  = z1 - dz;
+      x2  = width / 2;
+
+      z3  = z0 - dz;
+    }
+    else if( ( z0 >= -0.5 * length ) && ( z3 < -0.5 * length ) ){
+      break;
+    }
+
+    double zPts[5];  double xPts[5];
+    
+    zPts[0] = z0;  xPts[0] = x0;
+    zPts[1] = z1;  xPts[1] = x1;
+    zPts[2] = z2;  xPts[2] = x2;
+    zPts[3] = z3;  xPts[3] = x3;
+
+    // close the perimeter
+    zPts[4] = zPts[0];
+    xPts[4] = xPts[0];
+
+    for ( int i = 0; i < 5; i++ ) {
+      printf("( %f, %f )\n", xPts[i], zPts[i] );
+    }
+
+
+    centers.emplace_back( 0.5*(x1 + x0 + dx), 0.5*(z1 + z0 - dz) );
+    // take some small fraction off due to some rounding problems
+    // that create overlap later
+    lengths.push_back( 0.999 * TMath::Sqrt( TMath::Power( x1 - x0, 2 ) +
+				    TMath::Power( z1 - z0, 2 ) ) );
+
+    printf( "(x,y) = (%5.1f,%5.1f)    length = %5.1f\n",
+	    centers.back().first, centers.back().second, lengths.back() );
+    
+    // decrement z0
+    z0 -= yStep;
+  }
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
