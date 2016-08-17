@@ -75,9 +75,9 @@ protected:
   std::vector<G4LogicalVolume*>    m_v_logicQuartz;
   std::vector<G4VPhysicalVolume*>  m_v_physQuartz;
 
-  std::vector<G4Box*>              m_v_solidReflector;
-  std::vector<G4LogicalVolume*>    m_v_logicReflector;
-  std::vector<G4VPhysicalVolume*>  m_v_physReflector;
+  std::vector<G4Box*>              m_v_solidPanel;
+  std::vector<G4LogicalVolume*>    m_v_logicPanel;
+  std::vector<G4VPhysicalVolume*>  m_v_physPanel;
   
   std::vector<G4Box*>              m_v_solidAbsorber;
   std::vector<G4LogicalVolume*>    m_v_logicAbsorber;

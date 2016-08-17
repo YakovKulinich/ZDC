@@ -54,10 +54,10 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
   G4String particleName;
   G4ParticleDefinition* particle
-    = particleTable->FindParticle(particleName="gamma");
+    = particleTable->FindParticle(particleName="pi0");
   m_particleGun->SetParticleDefinition(particle);
   m_particleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,-1.));
-  m_particleGun->SetParticleEnergy(6.*MeV);
+  m_particleGun->SetParticleEnergy(7.* TeV);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
