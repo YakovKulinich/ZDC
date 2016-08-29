@@ -228,11 +228,44 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4VisAttributes* oilColor = new G4VisAttributes( G4Colour::Magenta() );
   m_logicOil->SetVisAttributes( oilColor );
 
+  /*
+  //----------------------------------------------     
+  // Top
+  //----------------------------------------------
+  G4double topSizeX     = boxSizeX - 2*(boxThickness + quartzThickness);
+  G4double topSizeY     = boxSizeY - 2*(boxThickness + quartzThickness);
+  G4double topSizeZ     = boxSizeZ - 2*boxThickness;
+
+  m_solidTop =    
+    new G4Box("Top",                         //its name
+	      0.5*topSizeX, 0.5*topSizeY, 0.5*topSizeZ);  // its size
+
+  G4Material* g4H2O  = nist->FindOrBuildMaterial("G4_WATER");
+  
+  m_logicTop =                         
+    new G4LogicalVolume(m_solidTop,          //its solid
+                        g4H2O,               //its material
+                        "Top");              //its name
+  
+  m_physTop = 
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(),       //at (0,0,0)
+                      m_logicTop,            //its logical volume
+                      "Top",                 //its name
+                      m_logicBox,            //its mother  volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      checkOverlaps);        //overlaps checking
+  
+  G4VisAttributes* topColor = new G4VisAttributes( G4Colour::Magenta() );
+  m_logicTop->SetVisAttributes( topColor );
+  */
+  
   //----------------------------------------------     
   // Plates
   //----------------------------------------------
   G4double reflectorThickness = config->GetValue( "reflectorThickness", 0.1 );
-  G4double absorberThicknessZ = config->GetValue( "absorberThicknessZ", 5 );
+  G4double absorberThicknessZ = config->GetValue( "absorberThicknessZ", 1 );
   G4double              theta = config->GetValue( "absorberTheta", 0.5 );
   
   std::vector< std::pair< G4double, G4double > > panelCenters;
@@ -247,7 +280,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   double absorberSizeZ = absorberThicknessZ * TMath::Cos( theta );
   double panelSizeZ    = absorberSizeZ + 2*reflectorThickness;
   
-  G4Material* matW  = nist->FindOrBuildMaterial("G4_W");
+  G4Material* g4W  = nist->FindOrBuildMaterial("G4_W");
   G4Material* g4Au = nist->FindOrBuildMaterial("G4_Au"); 
   
   G4VisAttributes* panelColor    = new G4VisAttributes( G4Colour::Yellow() );
@@ -275,7 +308,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
     m_v_logicAbsorber.
       push_back( new G4LogicalVolume(m_v_solidAbsorber.back(), //its solid
-				     g4Au,                     //its material
+				     g4W,                      //its material
 				     "Absorber") );            //its name
 
     m_v_logicAbsorber.back()->SetVisAttributes( absorberColor );
@@ -343,7 +376,7 @@ ComputeDiagonalGeo( std::vector<std::pair< G4double, G4double > >& centers,
   double       gap =      gapThicknessZ * cos(theta);
 
   double tanTheta   = TMath::Tan( theta );
-  double widthPrime = width/TMath::Cos( theta ); //- thickness * tanTheta; 
+  double widthPrime = width/TMath::Cos( theta ) - thickness * tanTheta; 
   printf( "widthPrime = %f\n", widthPrime );
   
   double yStep = ( thickness + gap ) / TMath::Cos( theta ); 
@@ -371,6 +404,8 @@ ComputeDiagonalGeo( std::vector<std::pair< G4double, G4double > >& centers,
 
     // test bad cases
     if( ( z1 > 0.5 * length ) && ( z2 >= 0.5 * length ) ){
+      printf("AAA\n");
+
       z1 = length / 2;
       x1 = ( z1 - z0 ) / TMath::Tan( theta ) - width / 2;
 
@@ -378,15 +413,18 @@ ComputeDiagonalGeo( std::vector<std::pair< G4double, G4double > >& centers,
       x2 = x1 + dx;
     }
     else if( ( z1 >= 0.5 * length ) && ( z2 < 0.5 * length ) ){
-      z0  = length / 2 - TMath::Tan( theta ) * ( width - dx );
+      printf("BBB\n");
+
+      // z0  = length / 2 - TMath::Tan( theta ) * ( width - dx );
       
       z1  = length / 2;
-      x1  = width / 2 - dx;
-
+      //      x1  = width / 2 - dx;
+      x1  = (length/2 - z0)/TMath::Tan( theta ) - width/2;
+      
       z2  = z1 - dz;
       x2  = width / 2;
 
-      z3  = z0 - dz;
+      // z3  = z0 - dz;
     }
     else if( ( z0 >= -0.5 * length ) && ( z3 < -0.5 * length ) ){
       break;
@@ -398,10 +436,6 @@ ComputeDiagonalGeo( std::vector<std::pair< G4double, G4double > >& centers,
     zPts[1] = z1;  xPts[1] = x1;
     zPts[2] = z2;  xPts[2] = x2;
     zPts[3] = z3;  xPts[3] = x3;
-
-    // close the perimeter
-    zPts[4] = zPts[0];
-    xPts[4] = xPts[0];
 
     for ( int i = 0; i < 5; i++ ) {
       printf("( %f, %f )\n", xPts[i], zPts[i] );

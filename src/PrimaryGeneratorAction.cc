@@ -85,7 +85,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   if ( !m_moduleBox )
   {
     G4LogicalVolume* moduleLV
-      = G4LogicalVolumeStore::GetInstance()->GetVolume("Module");
+      = G4LogicalVolumeStore::GetInstance()->GetVolume("Box");
     if ( moduleLV ) m_moduleBox = dynamic_cast<G4Box*>(moduleLV->GetSolid());
   }
 
