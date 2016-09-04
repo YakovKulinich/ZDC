@@ -41,6 +41,7 @@ class G4Para;
 class G4CSGSolid;
 class G4VPhysicalVolume;
 class G4LogicalVolume;
+class G4Material;
 
 class SharedData;
 
@@ -52,14 +53,19 @@ public:
   DetectorConstruction();
   DetectorConstruction( SharedData* );
   virtual ~DetectorConstruction();
-
-  virtual void               InitializeParameters();
+  
   virtual G4VPhysicalVolume* Construct();
 
-  void BuildDiagonalGeo();
-  void BuildChevronGeo();
+  virtual void               InitializeParameters();
+  virtual void               DefineMaterials();
   
-  G4LogicalVolume* GetScoringVolume() const { return m_scoringVolume; }
+  virtual void               DefineBorderProperties();
+  virtual G4VPhysicalVolume* ConstructDetector();
+  
+  virtual void               BuildDiagonalGeo();
+  virtual void               BuildChevronGeo();
+  
+  G4LogicalVolume*   GetScoringVolume() const { return m_scoringVolume; }
   
 protected:
   bool               m_checkOverlaps;
@@ -71,7 +77,14 @@ protected:
   double             m_chamberSizeX;
   double             m_chamberSizeY;
   double             m_chamberSizeZ;
-  
+
+  G4Material*        m_matBox;
+  G4Material*        m_matQuartz;
+  G4Material*        m_matOil;
+  G4Material*        m_matReflector;
+  G4Material*        m_matAbsorber;
+  G4Material*        m_matTop;
+
   G4Box*             m_solidWorld;
   G4LogicalVolume*   m_logicWorld;
   G4VPhysicalVolume* m_physWorld;
