@@ -52,7 +52,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 DetectorConstruction::DetectorConstruction()
-  : G4VUserDetectorConstruction(),
+  : G4VUserDetectorConstruction(), m_checkOverlaps(true),
     m_moduleSizeX(0), m_moduleSizeY(0), m_moduleSizeZ(0),
     m_chamberSizeX(0), m_chamberSizeY(0), m_chamberSizeZ(0),
     m_scoringVolume(0),
@@ -62,7 +62,7 @@ DetectorConstruction::DetectorConstruction()
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 DetectorConstruction::DetectorConstruction( SharedData* sd )
-  : G4VUserDetectorConstruction(),
+  : G4VUserDetectorConstruction(), m_checkOverlaps(true),
     m_moduleSizeX(0), m_moduleSizeY(0), m_moduleSizeZ(0),
     m_chamberSizeX(0), m_chamberSizeY(0), m_chamberSizeZ(0),
     m_scoringVolume(0),
@@ -93,6 +93,9 @@ void DetectorConstruction::InitializeParameters()
   m_chamberSizeY  = config->GetValue( "absorberHeight", 180 );
   m_chamberSizeZ  = m_moduleSizeZ - 2*moduleWallThickness;
 
+  // Option to switch on/off checking of volumes overlaps
+  //
+  m_checkOverlaps = true;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -107,10 +110,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // Get nist material manager
   G4NistManager* nist = G4NistManager::Instance();
   
-  // Option to switch on/off checking of volumes overlaps
-  //
-  G4bool checkOverlaps = true;
-
   //----------------------------------------------     
   // World
   //----------------------------------------------
@@ -140,7 +139,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
                       0,                     //its mother  volume
                       false,                 //no boolean operation
                       0,                     //copy number
-                      checkOverlaps);        //overlaps checking
+                      m_checkOverlaps);        //overlaps checking
                      
   //----------------------------------------------     
   // Box
@@ -164,7 +163,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
                       m_logicWorld,          //its mother  volume
                       false,                 //no boolean operation
                       0,                     //copy number
-                      checkOverlaps);        //overlaps checking
+                      m_checkOverlaps);        //overlaps checking
                      
   //----------------------------------------------     
   // Quartz
@@ -222,51 +221,18 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 				   m_logicBox,              //its mother  volume
 				   false,                   //no boolean operation
 				   qn,                      //copy number
-				   checkOverlaps) );        //overlaps checking
+				   m_checkOverlaps) );        //overlaps checking
   }
- 
-  //----------------------------------------------     
-  // Oil
-  //----------------------------------------------
-  G4double oilSizeX      = m_chamberSizeX;
-  G4double oilSizeY      = m_chamberSizeY;
-  G4double oilSizeZ      = m_chamberSizeZ;
-  G4double oilPosY       = -0.5*m_moduleSizeY + moduleWallThickness +
-    quartzThickness + 0.5*oilSizeY;
-  
-  G4double absorberSizeY = oilSizeY;         // they should be same for now
-  
-  m_solidOil =    
-    new G4Box("Oil",                         //its name
-	      0.5*oilSizeX, 0.5*oilSizeY, 0.5*oilSizeZ);  // its size
 
-  G4Material* g4H2O  = nist->FindOrBuildMaterial("G4_WATER");
-  
-  m_logicOil =                         
-    new G4LogicalVolume(m_solidOil,          //its solid
-                        g4H2O,               //its material
-                        "Oil");              //its name
-  
-  m_physOil = 
-    new G4PVPlacement(0,                     //no rotation
-                      G4ThreeVector(0, oilPosY, 0), //at (0,oilPosY,0)
-                      m_logicOil,            //its logical volume
-                      "Oil",                 //its name
-                      m_logicBox,            //its mother  volume
-                      false,                 //no boolean operation
-                      0,                     //copy number
-                      checkOverlaps);        //overlaps checking
-  
-  G4VisAttributes* oilColor = new G4VisAttributes( G4Colour::Magenta() );
-  m_logicOil->SetVisAttributes( oilColor );
-  
   //----------------------------------------------     
   // Top
   //----------------------------------------------
-  G4double topSizeX     = m_moduleSizeX - 2*(moduleWallThickness + quartzThickness);
-  G4double topSizeY     = m_moduleSizeY - absorberSizeY - 2*(moduleWallThickness + quartzThickness);
-  G4double topSizeZ     = m_moduleSizeZ - 2*moduleWallThickness;
-  G4double topPosY      = 0.5*m_moduleSizeY - moduleWallThickness -
+  G4double absorberSizeY = m_chamberSizeY;        
+  
+  G4double topSizeX      = m_moduleSizeX - 2*(moduleWallThickness + quartzThickness);
+  G4double topSizeY      = m_moduleSizeY - absorberSizeY - 2*(moduleWallThickness + quartzThickness);
+  G4double topSizeZ      = m_moduleSizeZ - 2*moduleWallThickness;
+  G4double topPosY       = 0.5*m_moduleSizeY - moduleWallThickness -
     quartzThickness - 0.5*topSizeY;
   
   m_solidTop =    
@@ -288,114 +254,122 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
                       m_logicBox,            //its mother  volume
                       false,                 //no boolean operation
                       0,                     //copy number
-                      checkOverlaps);        //overlaps checking
+                      m_checkOverlaps);        //overlaps checking
   
   G4VisAttributes* topColor = new G4VisAttributes( G4Colour::Grey() );
   m_logicTop->SetVisAttributes( topColor );
-
-  /*
+  
   //----------------------------------------------     
-  // Plates
-  //---------------------------------------------- 
+  // Oil
+  //----------------------------------------------
+  G4double oilSizeX      = m_chamberSizeX;
+  G4double oilSizeY      = m_chamberSizeY;
+  G4double oilSizeZ      = m_chamberSizeZ;
+  G4double oilPosY       = -0.5*m_moduleSizeY + moduleWallThickness +
+    quartzThickness + 0.5*oilSizeY;
+  
+  m_solidOil =    
+    new G4Box("Oil",                         //its name
+	      0.5*oilSizeX, 0.5*oilSizeY, 0.5*oilSizeZ);  // its size
+
+  G4Material* g4H2O  = nist->FindOrBuildMaterial("G4_WATER");
+  
+  m_logicOil =                         
+    new G4LogicalVolume(m_solidOil,          //its solid
+                        g4H2O,               //its material
+                        "Oil");              //its name
+  
+  m_physOil = 
+    new G4PVPlacement(0,                     //no rotation
+                      G4ThreeVector(0, oilPosY, 0), //at (0,oilPosY,0)
+                      m_logicOil,            //its logical volume
+                      "Oil",                 //its name
+                      m_logicBox,            //its mother  volume
+                      false,                 //no boolean operation
+                      0,                     //copy number
+                      m_checkOverlaps);        //overlaps checking
+  
+  G4VisAttributes* oilColor = new G4VisAttributes( G4Colour::Magenta() );
+  m_logicOil->SetVisAttributes( oilColor );
+
+  //----------------------------------------------     
+  // Build Plates with Reflectors 
+  //----------------------------------------------
+  std::string geoConfig = config->GetValue("geometryConfiguration","chevron");
+  if( !geoConfig.compare("chevron") ) BuildChevronGeo();
+  else if( !geoConfig.compare("diagonal") ) BuildDiagonalGeo();
+  
+  // Set Box as scoring volume
+  //
+  m_scoringVolume = m_logicBox;
+
+  //
+  //always return the physical World
+  //
+  return m_physWorld;
+}
+
+void DetectorConstruction ::
+BuildChevronGeo(){
+  // Get config
+  TEnv* config = m_sd->GetConfig();
+  // Get nist material manager
+  G4NistManager* nist = G4NistManager::Instance();
+  
+  double absorberThicknessZ = config->GetValue( "absorberThicknessZ", 10 );
+  double      gapThicknessZ = config->GetValue( "gapThicknessZ", 2 );
+  double              theta = config->GetValue( "absorberTheta", 0.5 );
+
+  double reflectorThickness  = config->GetValue( "reflectorThickness", 0.1 );
+  double reflectorThicknessZ = reflectorThickness / cos( theta );
+
+  double tanTheta   = TMath::Tan( theta );
+
+  double totalThicknessZ = absorberThicknessZ + 2 * reflectorThicknessZ ;
+
+  double yStep = totalThicknessZ + gapThicknessZ;
+  
+  double z0 = 0.5*m_chamberSizeZ - 0.5*m_chamberSizeX * tanTheta - totalThicknessZ;
+
+  printf(" 0.5 m_chamberSizeZ = %f\n", 0.5 * m_chamberSizeZ );
+  printf(" 0.5 m_chamberSizeX  = %f\n", 0.5 * m_chamberSizeX  );
+  printf(" totalThick = %f\n", totalThicknessZ );
+
   std::vector< std::pair< G4double, G4double > > panelCenters;
   std::vector< G4double > panelLengths;
   
-  ComputeDiagonalGeo( panelCenters, panelLengths );
-
-  G4double theta              = config->GetValue( "absorberTheta", 0.5 );
-  
-  G4double reflectorThickness = config->GetValue( "reflectorThickness", 0.1 );
-  G4double absorberThicknessZ = config->GetValue( "absorberThicknessZ", 1 );
-  G4double absorberSizeZ      = absorberThicknessZ * TMath::Cos( theta );
- 
-  G4double panelSizeY         = absorberSizeY;
-  G4double panelSizeZ         = absorberSizeZ + 2*reflectorThickness;
-  
-  G4Material* g4W  = nist->FindOrBuildMaterial("G4_W");
-  G4Material* g4Au = nist->FindOrBuildMaterial("G4_Au"); 
-  
-  G4VisAttributes* panelColor    = new G4VisAttributes( G4Colour::Yellow() );
-  G4VisAttributes* absorberColor = new G4VisAttributes( G4Colour::Red() );
-
-  G4RotationMatrix* rotPanel = new G4RotationMatrix();
-  rotPanel->rotateY( theta*rad);
-  
-  for( unsigned int sn = 0; sn < panelCenters.size(); sn++ ){
-    m_v_solidPanel. 
-      push_back( new G4Box("Panel",               //its name
-			   0.5*panelLengths.at(sn),
-			   0.5*panelSizeY,  
-			   0.5*panelSizeZ) );     //its size
+  while( z0 > -0.5 * m_chamberSizeZ ){
+    printf("\n-----Panel-----\n");
+    printf("zo=%5.1f ", z0 );
     
-    m_v_solidAbsorber.
-      push_back( new G4Box("Absorber",            //its name
-			   0.5*panelLengths.at(sn),
-			   0.5*absorberSizeY,
-			   0.5*absorberSizeZ) );  //its size
+    double zCoord =
+      z0 + 0.5*totalThicknessZ + 0.25 * m_chamberSizeX * tan(theta);
 
-    m_v_logicPanel.
-      push_back( new G4LogicalVolume(m_v_solidPanel.back(), //its solid
-				     g4Au,                  //its material
-				     "Panel") );            //its name
+    double xCoord = 0.25 * m_chamberSizeX;
 
-    m_v_logicPanel.back()->SetVisAttributes( panelColor );
+    panelCenters.emplace_back( xCoord, zCoord);
 
-    m_v_logicAbsorber.
-      push_back( new G4LogicalVolume(m_v_solidAbsorber.back(), //its solid
-				     g4W,                      //its material
-				     "Absorber") );            //its name
-
-    m_v_logicAbsorber.back()->SetVisAttributes( absorberColor );
+    printf( "(x,y) = (%5.1f,%5.1f)\n",
+	    panelCenters.back().first, panelCenters.back().second );
     
-    m_v_physPanel.
-      push_back( new G4PVPlacement(rotPanel,               //no rotation
-				   G4ThreeVector(panelCenters.at(sn).first,
-						 0,
-						 panelCenters.at(sn).second),
-				   m_v_logicPanel.back(),  //its logical volume
-				   "Panel",                //its name
-				   m_logicOil,             //its mother  volume
-				   false,                  //no boolean operation
-				   sn,                     //copy number
-				   checkOverlaps) );       //overlaps checking
-
-    m_v_physAbsorber.
-      push_back( new G4PVPlacement(0,                         //no rotation
-				   G4ThreeVector(),
-				   m_v_logicAbsorber.back(),  //its logical volume
-				   "Absorber",                //its name
-				   m_v_logicPanel.back(),     //its mother  volume
-				   false,                     //no boolean operation
-				   sn,                        //copy number
-				   checkOverlaps) );          //overlaps checking
+    z0 -= yStep; 
   }
-  */
+
   //----------------------------------------------     
   // Plates
-  //---------------------------------------------- 
-  std::vector< std::pair< G4double, G4double > > panelCenters;
-  std::vector< G4double > panelLengths;
-  
-  ComputeChevronGeo( panelCenters );
-  
-  G4double theta               = config->GetValue( "absorberTheta", 0.5 );
-  
-  G4double absorberThicknessZ  = config->GetValue( "absorberThicknessZ", 1 );
+  //----------------------------------------------
+  G4double absorberSizeY       = m_chamberSizeY;
   G4double absorberSizeZ       = absorberThicknessZ * TMath::Cos( theta );
-
-  G4double reflectorThickness  = config->GetValue( "reflectorThickness", 0.1 ); 
-  G4double reflectorThicknessZ = reflectorThickness / TMath::Cos( theta );
-
+  
   // These are before rotation. Thats why the x<->z
   G4double panelSizeX         = absorberSizeZ + 2*reflectorThicknessZ;
   G4double panelSizeY         = absorberSizeY;
-  G4double panelSizeZ         = 0.5 * oilSizeX;
+  G4double panelSizeZ         = 0.5 * m_chamberSizeX;
 
   // These are before rotation. Thats why the x<->z
   G4double absorberSizeXX     = absorberSizeZ;
   G4double absorberSizeYY     = absorberSizeY;
-  G4double absorberSizeZZ     = 0.5 * oilSizeX;
-
+  G4double absorberSizeZZ     = 0.5 * m_chamberSizeX;
   
   G4Material* g4W  = nist->FindOrBuildMaterial("G4_W");
   G4Material* g4Au = nist->FindOrBuildMaterial("G4_Au"); 
@@ -453,7 +427,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 				     m_logicOil,             //its mother  volume
 				     false,                  //no boolean operation
 				     sn,                     //copy number
-				     checkOverlaps) );       //overlaps checking
+				     m_checkOverlaps) );       //overlaps checking
 
       m_v_physAbsorber.
 	push_back( new G4PVPlacement(0,                         //no rotation
@@ -463,66 +437,18 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 				     m_v_logicPanel.back(),     //its mother  volume
 				     false,                     //no boolean operation
 				     sn,                        //copy number
-				     checkOverlaps) );          //overlaps checking
+				     m_checkOverlaps) );          //overlaps checking
     }
   }
-  
-  // Set Box as scoring volume
-  //
-  m_scoringVolume = m_logicBox;
-
-  //
-  //always return the physical World
-  //
-  return m_physWorld;
 }
 
 void DetectorConstruction ::
-ComputeChevronGeo(  std::vector<std::pair< G4double, G4double > >& centers ){
-  TEnv* config = m_sd->GetConfig();
-  
-  double absorberThicknessZ = config->GetValue( "absorberThicknessZ", 10 );
-  double      gapThicknessZ = config->GetValue( "gapThicknessZ", 2 );
-  double              theta = config->GetValue( "absorberTheta", 0.5 );
-
-  double reflectorThickness  = config->GetValue( "reflectorThickness", 0.1 );
-  double reflectorThicknessZ = reflectorThickness / cos( theta );
-
-  double tanTheta   = TMath::Tan( theta );
-
-  double totalThicknessZ = absorberThicknessZ + 2 * reflectorThicknessZ ;
-
-  double yStep = totalThicknessZ + gapThicknessZ;
-  
-  double z0 = 0.5*m_chamberSizeZ - 0.5*m_chamberSizeX * tanTheta - totalThicknessZ;
-
-  printf(" 0.5 m_chamberSizeZ = %f\n", 0.5 * m_chamberSizeZ );
-  printf(" 0.5 m_chamberSizeX  = %f\n", 0.5 * m_chamberSizeX  );
-  printf(" totalThick = %f\n", totalThicknessZ );
-  
-  while( z0 > -0.5 * m_chamberSizeZ ){
-    printf("\n-----Panel-----\n");
-    printf("zo=%5.1f ", z0 );
-    
-    double zCoord =
-      z0 + 0.5*totalThicknessZ + 0.25 * m_chamberSizeX * tan(theta);
-
-    double xCoord = 0.25 * m_chamberSizeX;
-
-    centers.emplace_back( xCoord, zCoord);
-
-    printf( "(x,y) = (%5.1f,%5.1f)\n",
-	    centers.back().first, centers.back().second );
-    
-    z0 -= yStep; 
-  }
-}
-
-void DetectorConstruction ::
-ComputeDiagonalGeo( std::vector<std::pair< G4double, G4double > >& centers,
-		    std::vector<G4double>& lengths )
+BuildDiagonalGeo()
 {
+  // Get config
   TEnv* config = m_sd->GetConfig();
+  // Get nist material manager
+  G4NistManager* nist = G4NistManager::Instance();
  
   double absorberThicknessZ = config->GetValue( "absorberThicknessZ", 5 );
   double      gapThicknessZ = config->GetValue( "gapThicknessZ", 10 );
@@ -548,7 +474,10 @@ ComputeDiagonalGeo( std::vector<std::pair< G4double, G4double > >& centers,
   
   double z0    = 0.5 * m_chamberSizeZ - 0.5 * tanTheta * m_chamberSizeX - deltaX;
   printf( "z0 = %f\n", z0 );
-    
+
+  std::vector< std::pair< G4double, G4double > > panelCenters;
+  std::vector< G4double > panelLengths; 
+  
   while( z0 > -0.5 * m_chamberSizeZ ){
     printf("\n-----Panel-----\n");
     double x0 = -0.5 * m_chamberSizeX;
@@ -593,17 +522,85 @@ ComputeDiagonalGeo( std::vector<std::pair< G4double, G4double > >& centers,
     }
 
 
-    centers.emplace_back( 0.5*(x1 + x0 + dx), 0.5*(z1 + z0 - dz) );
+    panelCenters.emplace_back( 0.5*(x1 + x0 + dx), 0.5*(z1 + z0 - dz) );
     // take some small fraction off due to some rounding problems
     // that create overlap later
-    lengths.push_back( 0.999 * TMath::Sqrt( TMath::Power( x1 - x0, 2 ) +
+    panelLengths.push_back( 0.999 * TMath::Sqrt( TMath::Power( x1 - x0, 2 ) +
 				    TMath::Power( z1 - z0, 2 ) ) );
 
     printf( "(x,y) = (%5.1f,%5.1f)    length = %5.1f\n",
-	    centers.back().first, centers.back().second, lengths.back() );
+	    panelCenters.back().first, panelCenters.back().second, panelLengths.back() );
     
     // decrement z0
     z0 -= yStep;
+  }
+
+  //----------------------------------------------     
+  // Plates
+  //---------------------------------------------- 
+  G4double absorberSizeY       = m_chamberSizeY;
+  G4double absorberSizeZ       = absorberThicknessZ * TMath::Cos( theta );
+ 
+  G4double panelSizeY         = absorberSizeY;
+  G4double panelSizeZ         = absorberSizeZ + 2*reflectorThickness;
+  
+  G4Material* g4W  = nist->FindOrBuildMaterial("G4_W");
+  G4Material* g4Au = nist->FindOrBuildMaterial("G4_Au"); 
+  
+  G4VisAttributes* panelColor    = new G4VisAttributes( G4Colour::Yellow() );
+  G4VisAttributes* absorberColor = new G4VisAttributes( G4Colour::Red() );
+
+  G4RotationMatrix* rotPanel = new G4RotationMatrix();
+  rotPanel->rotateY( theta*rad);
+  
+  for( unsigned int sn = 0; sn < panelCenters.size(); sn++ ){
+    m_v_solidPanel. 
+      push_back( new G4Box("Panel",               //its name
+			   0.5*panelLengths.at(sn),
+			   0.5*panelSizeY,  
+			   0.5*panelSizeZ) );     //its size
+    
+    m_v_solidAbsorber.
+      push_back( new G4Box("Absorber",            //its name
+			   0.5*panelLengths.at(sn),
+			   0.5*absorberSizeY,
+			   0.5*absorberSizeZ) );  //its size
+
+    m_v_logicPanel.
+      push_back( new G4LogicalVolume(m_v_solidPanel.back(), //its solid
+				     g4Au,                  //its material
+				     "Panel") );            //its name
+
+    m_v_logicPanel.back()->SetVisAttributes( panelColor );
+
+    m_v_logicAbsorber.
+      push_back( new G4LogicalVolume(m_v_solidAbsorber.back(), //its solid
+				     g4W,                      //its material
+				     "Absorber") );            //its name
+
+    m_v_logicAbsorber.back()->SetVisAttributes( absorberColor );
+    
+    m_v_physPanel.
+      push_back( new G4PVPlacement(rotPanel,               //no rotation
+				   G4ThreeVector(panelCenters.at(sn).first,
+						 0,
+						 panelCenters.at(sn).second),
+				   m_v_logicPanel.back(),  //its logical volume
+				   "Panel",                //its name
+				   m_logicOil,             //its mother  volume
+				   false,                  //no boolean operation
+				   sn,                     //copy number
+				   m_checkOverlaps) );       //overlaps checking
+
+    m_v_physAbsorber.
+      push_back( new G4PVPlacement(0,                         //no rotation
+				   G4ThreeVector(),
+				   m_v_logicAbsorber.back(),  //its logical volume
+				   "Absorber",                //its name
+				   m_v_logicPanel.back(),     //its mother  volume
+				   false,                     //no boolean operation
+				   sn,                        //copy number
+				   m_checkOverlaps) );          //overlaps checking
   }
 }
 

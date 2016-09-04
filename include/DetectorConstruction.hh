@@ -56,14 +56,14 @@ public:
   virtual void               InitializeParameters();
   virtual G4VPhysicalVolume* Construct();
 
-  void ComputeDiagonalGeo( std::vector< std::pair< G4double, G4double > >&,
-			   std::vector<G4double>& );
-
-  void ComputeChevronGeo( std::vector< std::pair< G4double, G4double > >& );
+  void BuildDiagonalGeo();
+  void BuildChevronGeo();
   
   G4LogicalVolume* GetScoringVolume() const { return m_scoringVolume; }
   
 protected:
+  bool               m_checkOverlaps;
+  
   double             m_moduleSizeX;
   double             m_moduleSizeY;
   double             m_moduleSizeZ;
