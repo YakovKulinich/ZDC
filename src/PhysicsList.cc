@@ -66,8 +66,11 @@ G4ThreadLocal G4OpBoundaryProcess* PhysicsList::fBoundaryProcess = 0;
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 PhysicsList::PhysicsList() 
-  : G4VUserPhysicsList(), fVerboseLevel(true), fMaxNumPhotonStep(300)
-{}
+  : G4VUserPhysicsList()
+{
+  fVerboseLevel     = true;
+  fMaxNumPhotonStep = 300;
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

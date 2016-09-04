@@ -29,6 +29,7 @@
 /// \brief Main program of the  example
 
 #include "DetectorConstruction.hh"
+#include "PhysicsList.hh"
 #include "ActionInitialization.hh"
 #include "SharedData.hh"
 
@@ -82,7 +83,8 @@ int main(int argc,char** argv)
   runManager->SetUserInitialization(new DetectorConstruction( sharedData ) );
   
   // Physics list
-  G4VModularPhysicsList* physicsList = new QBBC;
+  // G4VModularPhysicsList* physicsList = new QBBC;
+  PhysicsList* physicsList = new PhysicsList();
   physicsList->SetVerboseLevel(1);
   runManager->SetUserInitialization(physicsList);
     
