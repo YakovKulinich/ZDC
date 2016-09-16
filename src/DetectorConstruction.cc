@@ -263,18 +263,18 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
 	      0.5*worldSizeZ );   
   
   m_logicWorld =                         
-    new G4LogicalVolume(m_solidWorld,        //its solid
-                        g4Air,               //its material
-                        "World");            //its name
+    new G4LogicalVolume(m_solidWorld,      //its solid
+                        g4Air,             //its material
+                        "World");          //its name
                                    
   m_physWorld = 
-    new G4PVPlacement(0,                     //no rotation
-                      G4ThreeVector(),       //at (0,0,0)
-                      m_logicWorld,          //its logical volume
-                      "World",               //its name
-                      0,                     //its mother  volume
-                      false,                 //no boolean operation
-                      0,                     //copy number
+    new G4PVPlacement(0,                   //no rotation
+                      G4ThreeVector(),     //at (0,0,0)
+                      m_logicWorld,        //its logical volume
+                      "World",             //its name
+                      0,                   //its mother  volume
+                      false,               //no boolean operation
+                      0,                   //copy number
                       checkOverlaps);      //overlaps checking
 
   //----------------------------------------------     
@@ -331,7 +331,6 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
                       false,               //no boolean operation
                       0,                   //copy number
                       checkOverlaps);      //overlaps checking
-  
   m_physHousingR = 
     new G4PVPlacement(rotModuleR,     
                       G4ThreeVector( +housingPosX, 0, 0),
@@ -341,7 +340,6 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
                       false,               //no boolean operation
                       1,                   //copy number
                       checkOverlaps);      //overlaps checking
-  
   //----------------------------------------------     
   // Oil
   //----------------------------------------------
@@ -391,33 +389,33 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
   //----------------------------------------------     
   // Build Plates with Reflectors 
   //----------------------------------------------
-  double dZprime      =  0.5 * totalThicknessZ * TMath::Cos(theta);
-  double zCoordPrime  =  0.5 * chamberSizeZprime - dZprime;  
-  double zStepPrime   =  (totalThicknessZ + gapThicknessZ) * TMath::Cos(theta);
+  double dZprimePanel     =  0.5 * totalThicknessZ * TMath::Cos(theta);
+  double zCoordPrimePanel =  0.5 * chamberSizeZprime - dZprimePanel;  
+  double zStepPrimePanel  =  (totalThicknessZ + gapThicknessZ) * TMath::Cos(theta);
 
   printf(" 0.5 chamberSizeZprime = %f\n", 0.5 * chamberSizeZprime );
   printf(" 0.5 chamberSizeXprime = %f\n", chamberHalfSizeXprime  );
   printf(" totalThicknessZ  = %f\n", totalThicknessZ );
-  printf(" zStepPrime       = %f\n", zStepPrime );
-  printf(" zCoordPrime      = %f\n", zCoordPrime );
+  printf(" zStepPrimePanel  = %f\n", zStepPrimePanel );
+  printf(" zCoordPrimePanel = %f\n", zCoordPrimePanel );
   printf(" theta            = %f\n", theta );
   printf(" tanTheta         = %f\n", TMath::Tan( theta ) );
   
   std::vector< std::pair<G4double, G4double> > panelCoords;
  
-  while( zCoordPrime > -0.5 * chamberSizeZprime + dZprime){
+  while( zCoordPrimePanel > -0.5 * chamberSizeZprime + dZprimePanel){
     printf("\n-----Panel-----\n");
-    printf("zCoordPrime=%5.1f ", zCoordPrime );
+    printf("zCoordPrimePanel=%5.1f ", zCoordPrimePanel );
 
-    double xCoord = zCoordPrime * TMath::Tan( theta );;
+    double xCoord = zCoordPrimePanel * TMath::Tan( theta );;
     
-    panelCoords.emplace_back( xCoord, zCoordPrime);
+    panelCoords.emplace_back( xCoord, zCoordPrimePanel);
 
     printf( "(x,z) = (%5.1f,%5.1f)\n",
 	    panelCoords.back().first,
 	    panelCoords.back().second );
     
-    zCoordPrime -= zStepPrime; 
+    zCoordPrimePanel -= zStepPrimePanel; 
   }
 
   //----------------------------------------------     
@@ -434,7 +432,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
   G4VisAttributes* panelColor    = new G4VisAttributes( G4Colour::Yellow() );
   G4VisAttributes* absorberColor = new G4VisAttributes( G4Colour::Red() );
   
-  for( unsigned int sn = 0; sn < panelCoords.size(); sn++ ){
+  for( unsigned int cn = 0; cn < panelCoords.size(); cn++ ){
 
     m_v_solidPanel. 
       push_back( new G4Para("Panel",               //its name
@@ -466,15 +464,15 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
     
     m_v_physPanel.
       push_back( new G4PVPlacement(0,
-				   G4ThreeVector( panelCoords.at(sn).first,
+				   G4ThreeVector( panelCoords.at(cn).first,
 						  0,
-						  panelCoords.at(sn).second ),
+						  panelCoords.at(cn).second ),
 				   m_v_logicPanel.back(),  //its logical volume
 				   "Panel",                //its name
 				   m_logicOil,             //its mother  volume
 				   false,                  //no boolean operation
-				   sn,                     //copy number
-				   checkOverlaps) );     //overlaps checking
+				   cn,                     //copy number
+				   checkOverlaps) );       //overlaps checking
 
     m_v_physAbsorber.
       push_back( new G4PVPlacement(0,                         //no rotation
@@ -483,10 +481,78 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
 				   "Absorber",                //its name
 				   m_v_logicPanel.back(),     //its mother  volume
 				   false,                     //no boolean operation
-				   sn,                        //copy number
+				   cn,                        //copy number
 				   checkOverlaps) );          //overlaps checking
    
   }
+
+  //----------------------------------------------     
+  // Quartz Coordinates
+  //----------------------------------------------
+  G4double quartzThickness      = config->GetValue("quartzThickness", 2);
+  G4double quartzThicknessPrime = quartzThickness / TMath::Cos(theta);
+  
+  G4double dZprimeQuartz     =  0.5 * gapThicknessZ * TMath::Cos(theta);
+  G4double zCoordPrimeQuartz =  0.5 * chamberSizeZprime - 2*dZprimePanel - dZprimeQuartz;  
+  G4double zStepPrimeQuartz  =  (totalThicknessZ + gapThicknessZ) * TMath::Cos(theta);
+  
+  std::vector< std::pair<G4double, G4double> > quartzCoords;
+ 
+  while( zCoordPrimeQuartz > -0.5 * chamberSizeZprime + dZprimeQuartz){
+    printf("\n-----Quartz-----\n");
+    printf("zCoordPrimeQuartz=%5.1f ", zCoordPrimeQuartz );
+
+    G4double xCoord =
+      zCoordPrimeQuartz * TMath::Tan( theta ) -
+      0.5*chamberHalfSizeXprime + 0.5 * quartzThicknessPrime;
+    
+    quartzCoords.emplace_back( xCoord, zCoordPrimeQuartz);
+
+    printf( "(x,z) = (%5.1f,%5.1f)\n",
+	    quartzCoords.back().first,
+	    quartzCoords.back().second );
+    
+    zCoordPrimeQuartz -= zStepPrimeQuartz; 
+  }
+
+  //----------------------------------------------     
+  // Quartz Placement
+  //----------------------------------------------
+  G4double quartzSizeX     = quartzThicknessPrime;
+  G4double quartzSizeY     = chamberSizeY;
+  G4double quartzSizeZ     = gapThicknessZ * TMath::Cos(theta);
+    
+  G4VisAttributes* quartzColor  = new G4VisAttributes( G4Colour::Blue() );
+
+  for( unsigned int cn = 0; cn < quartzCoords.size(); cn++ ){
+
+    m_v_solidQuartz. 
+      push_back( new G4Para("Quartz",             //its name
+			    0.5 * quartzSizeX,    //its size
+			    0.5 * quartzSizeY,
+			    0.5 * quartzSizeZ,
+			    0, theta, 0 ) );       
+    
+    m_v_logicQuartz.
+      push_back( new G4LogicalVolume(m_v_solidQuartz.back(), //its solid
+				     m_matReflector,         //its material
+				     "Quartz") );            //its name
+
+    m_v_logicQuartz.back()->SetVisAttributes( quartzColor );
+
+    m_v_physQuartz.
+      push_back( new G4PVPlacement(0,
+				   G4ThreeVector( quartzCoords.at(cn).first,
+						  0,
+						  quartzCoords.at(cn).second ),
+				   m_v_logicQuartz.back(),  //its logical volume
+				   "Quartz",                //its name
+				   m_logicOil,              //its mother  volume
+				   false,                   //no boolean operation
+				   cn,                      //copy number
+				   checkOverlaps) );        //overlaps checking
+  }
+  
   
   //----------------------------------------------     
   // Define Surface/Border Properties

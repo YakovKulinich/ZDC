@@ -91,6 +91,10 @@ protected:
   std::vector<G4LogicalVolume*>    m_v_logicAbsorber;
   std::vector<G4VPhysicalVolume*>  m_v_physAbsorber;
 
+  std::vector<G4Para*>             m_v_solidQuartz;
+  std::vector<G4LogicalVolume*>    m_v_logicQuartz;
+  std::vector<G4VPhysicalVolume*>  m_v_physQuartz;
+
  
 protected:
   G4LogicalVolume*  m_scoringVolume;

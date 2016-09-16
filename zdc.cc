@@ -35,11 +35,14 @@
 
 #include "MyRunManager.hh"
 
+/*
 #ifdef G4MULTITHREADED
-#include "G4MTRunManager.hh"
+#include "MyMTRunManager.hh"
 #else
-#include "G4RunManager.hh"
+#include "MyRunManager.hh"
 #endif
+*/
+#include "MyRunManager.hh"
 
 #include "G4UImanager.hh"
 #include "FTFP_BERT.hh"
@@ -83,13 +86,15 @@ int main(int argc,char** argv)
 
   // Construct the default run manager
   //
+  /*
 #ifdef G4MULTITHREADED
-  G4MTRunManager* runManager = new MyRunManager( sharedData );
+  G4MTRunManager* runManager = new MyMTRunManager( sharedData );
   runManager->SetNumberOfThreads(7);
 #else
   G4RunManager* runManager = new MyRunManager( sharedData );
 #endif
-  
+  */
+  G4RunManager* runManager = new MyRunManager( sharedData );
   // Set mandatory initialization classes
   //
   // Detector construction

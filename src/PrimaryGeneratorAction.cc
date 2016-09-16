@@ -55,10 +55,10 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
   G4String particleName;
   G4ParticleDefinition* particle
-    = particleTable->FindParticle(particleName="proton");
+    = particleTable->FindParticle(particleName="e+");
   m_particleGun->SetParticleDefinition(particle);
   m_particleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,-1.));
-  m_particleGun->SetParticleEnergy(10.* GeV);
+  m_particleGun->SetParticleEnergy(10.* MeV);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -106,7 +106,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   G4double size = 0.25; 
   G4double x0 = size * worldSizeX * (G4UniformRand()-0.5);
   G4double y0 = size * worldSizeY * (G4UniformRand()-0.5);
-  G4double z0 = 0.49 * worldSizeZ;
+  G4double z0 = 0.30 * worldSizeZ;
   
   m_particleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
 

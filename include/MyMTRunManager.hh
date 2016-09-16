@@ -31,12 +31,12 @@
 #ifndef MyMTRunManager_h
 #define MyMTRunManager_h 1
 
-#include "G4RunManager.hh"
+#include "G4MTRunManager.hh"
 #include <string>
 
 class SharedData;
 
-class MyMTRunManager : public G4RunManager
+class MyMTRunManager : public G4MTRunManager
 {
 public:
   MyMTRunManager();
