@@ -40,12 +40,13 @@
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
 
+#include <iostream>
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 PrimaryGeneratorAction::PrimaryGeneratorAction()
 : G4VUserPrimaryGeneratorAction(),
   m_particleGun(0), 
-  m_moduleBox(0)
+  m_world(0)
 {
   G4int n_particle = 1;
   m_particleGun  = new G4ParticleGun(n_particle);
@@ -54,10 +55,10 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
   G4String particleName;
   G4ParticleDefinition* particle
-    = particleTable->FindParticle(particleName="pi0");
+    = particleTable->FindParticle(particleName="proton");
   m_particleGun->SetParticleDefinition(particle);
   m_particleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,-1.));
-  m_particleGun->SetParticleEnergy(7.* TeV);
+  m_particleGun->SetParticleEnergy(10.* GeV);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -78,21 +79,20 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   // on DetectorConstruction class we get Module volume
   // from G4LogicalVolumeStore.
   
-  G4double moduleSizeX = 0;
-  G4double moduleSizeY = 0;
-  G4double moduleSizeZ = 0;
+  G4double worldSizeX = 0;
+  G4double worldSizeY = 0;
+  G4double worldSizeZ = 0;
 
-  if ( !m_moduleBox )
+  if ( !m_world )
   {
     G4LogicalVolume* moduleLV
-      = G4LogicalVolumeStore::GetInstance()->GetVolume("Box");
-    if ( moduleLV ) m_moduleBox = dynamic_cast<G4Box*>(moduleLV->GetSolid());
+      = G4LogicalVolumeStore::GetInstance()->GetVolume("World");
+    if ( moduleLV ) m_world = dynamic_cast<G4Box*>(moduleLV->GetSolid());
   }
-
-  if ( m_moduleBox ) {
-    moduleSizeX = m_moduleBox->GetXHalfLength()*2.;
-    moduleSizeY = m_moduleBox->GetYHalfLength()*2.;
-    moduleSizeZ = m_moduleBox->GetZHalfLength()*2.;
+  if ( m_world ) {
+    worldSizeX = m_world->GetXHalfLength()*2.;
+    worldSizeY = m_world->GetYHalfLength()*2.;
+    worldSizeZ = m_world->GetZHalfLength()*2.;
   }  
   else  {
     G4ExceptionDescription msg;
@@ -104,9 +104,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   }
 
   G4double size = 0.25; 
-  G4double x0 = size * moduleSizeX * (G4UniformRand()-0.5);
-  G4double y0 = size * moduleSizeY * (G4UniformRand()-0.5);
-  G4double z0 = 0.55 * moduleSizeZ;
+  G4double x0 = size * worldSizeX * (G4UniformRand()-0.5);
+  G4double y0 = size * worldSizeY * (G4UniformRand()-0.5);
+  G4double z0 = 0.49 * worldSizeZ;
   
   m_particleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
 

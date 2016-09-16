@@ -38,7 +38,6 @@
 
 class G4Box;
 class G4Para;
-class G4CSGSolid;
 class G4VPhysicalVolume;
 class G4LogicalVolume;
 class G4Material;
@@ -62,60 +61,36 @@ public:
   virtual void               DefineBorderProperties();
   virtual G4VPhysicalVolume* ConstructDetector();
   
-  virtual void               BuildDiagonalGeo();
-  virtual void               BuildChevronGeo();
-  
   G4LogicalVolume*   GetScoringVolume() const { return m_scoringVolume; }
   
 protected:
-  bool               m_checkOverlaps;
-  
-  double             m_moduleSizeX;
-  double             m_moduleSizeY;
-  double             m_moduleSizeZ;
-  
-  double             m_chamberSizeX;
-  double             m_chamberSizeY;
-  double             m_chamberSizeZ;
-
-  G4Material*        m_matBox;
+  G4Material*        m_matHousing;
   G4Material*        m_matQuartz;
   G4Material*        m_matOil;
   G4Material*        m_matReflector;
   G4Material*        m_matAbsorber;
-  G4Material*        m_matTop;
 
   G4Box*             m_solidWorld;
   G4LogicalVolume*   m_logicWorld;
   G4VPhysicalVolume* m_physWorld;
 
-  G4Box*             m_solidBox;
-  G4LogicalVolume*   m_logicBox;
-  G4VPhysicalVolume* m_physBox;
+  G4Para*            m_solidHousing;
+  G4LogicalVolume*   m_logicHousing;
+  G4VPhysicalVolume* m_physHousingL;
+  G4VPhysicalVolume* m_physHousingR;
   
-  G4Box*             m_solidOil;
+  G4Para*            m_solidOil;
   G4LogicalVolume*   m_logicOil;
   G4VPhysicalVolume* m_physOil;
-
-  G4Box*             m_solidTop;
-  G4LogicalVolume*   m_logicTop;
-  G4VPhysicalVolume* m_physTop;
-
-  std::vector<G4Box*>              m_v_solidQuartz;
-  std::vector<G4LogicalVolume*>    m_v_logicQuartz;
-  std::vector<G4VPhysicalVolume*>  m_v_physQuartz;
  
-  std::vector<G4CSGSolid*>         m_v_solidPanel;
+  std::vector<G4Para*>             m_v_solidPanel;
   std::vector<G4LogicalVolume*>    m_v_logicPanel;
   std::vector<G4VPhysicalVolume*>  m_v_physPanel;
   
-  std::vector<G4CSGSolid*>         m_v_solidAbsorber;
+  std::vector<G4Para*>             m_v_solidAbsorber;
   std::vector<G4LogicalVolume*>    m_v_logicAbsorber;
   std::vector<G4VPhysicalVolume*>  m_v_physAbsorber;
 
-  std::vector<G4Box*>              m_v_solidTopQuartz;
-  std::vector<G4LogicalVolume*>    m_v_logicTopQuartz;
-  std::vector<G4VPhysicalVolume*>  m_v_physTopQuartz;  
  
 protected:
   G4LogicalVolume*  m_scoringVolume;

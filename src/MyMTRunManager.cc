@@ -23,44 +23,67 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: PrimaryGeneratorAction.hh 90623 2015-06-05 09:24:30Z gcosmo $
+// $Id: MyMTRunManager.cc 74483 2013-10-09 13:37:06Z gcosmo $
 //
-/// \file PrimaryGeneratorAction.hh
-/// \brief Definition of the PrimaryGeneratorAction class
+/// \file MyMTRunManager.cc
+/// \brief Implementation of the MyMTRunManager class
 
-#ifndef PrimaryGeneratorAction_h
-#define PrimaryGeneratorAction_h 1
+#include "MyMTRunManager.hh"
+#include "SharedData.hh"
 
+#include "G4Timer.hh"
+ 
+#include "G4RunManagerKernel.hh"
+ 
+#include "G4StateManager.hh"
+#include "G4ApplicationState.hh"
+#include "Randomize.hh"
+#include "G4Run.hh"
+#include "G4RunMessenger.hh"
+#include "G4VUserPhysicsList.hh"
+#include "G4VUserDetectorConstruction.hh"
+#include "G4UserRunAction.hh"
 #include "G4VUserPrimaryGeneratorAction.hh"
-#include "G4ParticleGun.hh"
-#include "globals.hh"
+#include "G4VPersistencyManager.hh"
+#include "G4ParticleTable.hh"
+#include "G4ProcessTable.hh"
+#include "G4UnitsTable.hh"
+#include "G4VVisManager.hh"
+#include "G4Material.hh"
+#include "G4SDManager.hh"
+#include "G4UImanager.hh"
+#include "G4ios.hh"
+#include <sstream>
 
-class G4ParticleGun;
-class G4Event;
-class G4Box;
-
-/// The primary generator action class with particle gun.
-///
-/// The default kinematic is a 6 MeV gamma, randomly distribued 
-/// in front of the phantom across 80% of the (X,Y) phantom size.
-
-class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
-{
-  public:
-    PrimaryGeneratorAction();    
-    virtual ~PrimaryGeneratorAction();
-
-    // method from the base class
-    virtual void GeneratePrimaries(G4Event*);         
-  
-    // method to access particle gun
-    const G4ParticleGun* GetParticleGun() const { return m_particleGun; }
-  
-  private:
-    G4ParticleGun*  m_particleGun; // pointer a to G4 gun class
-    G4Box* m_world;
-};
+#include <iostream>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#endif
+MyMTRunManager::MyMTRunManager()
+  : m_sd( NULL )
+{}
+
+MyMTRunManager::MyMTRunManager( SharedData* sd )
+  : m_sd( sd )
+{}
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+
+MyMTRunManager::~MyMTRunManager()
+{}
+
+void MyMTRunManager::TerminateOneEvent()
+{
+  StackPreviousEvent(currentEvent);
+  currentEvent = 0;
+
+  // This is new, call shared data's end of event
+  m_sd->EndOfEvent();
+  
+  numberOfEventProcessed++;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+

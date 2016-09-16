@@ -23,42 +23,30 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: PrimaryGeneratorAction.hh 90623 2015-06-05 09:24:30Z gcosmo $
+// $Id: MyMTRunManager.hh 74483 2013-10-09 13:37:06Z gcosmo $
 //
-/// \file PrimaryGeneratorAction.hh
-/// \brief Definition of the PrimaryGeneratorAction class
+/// \file MyMTRunManager.hh
+/// \brief Definition of the MyMTRunManager class
 
-#ifndef PrimaryGeneratorAction_h
-#define PrimaryGeneratorAction_h 1
+#ifndef MyMTRunManager_h
+#define MyMTRunManager_h 1
 
-#include "G4VUserPrimaryGeneratorAction.hh"
-#include "G4ParticleGun.hh"
-#include "globals.hh"
+#include "G4RunManager.hh"
+#include <string>
 
-class G4ParticleGun;
-class G4Event;
-class G4Box;
+class SharedData;
 
-/// The primary generator action class with particle gun.
-///
-/// The default kinematic is a 6 MeV gamma, randomly distribued 
-/// in front of the phantom across 80% of the (X,Y) phantom size.
-
-class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
+class MyMTRunManager : public G4RunManager
 {
-  public:
-    PrimaryGeneratorAction();    
-    virtual ~PrimaryGeneratorAction();
+public:
+  MyMTRunManager();
+  MyMTRunManager( SharedData* );
+  virtual ~MyMTRunManager();
 
-    // method from the base class
-    virtual void GeneratePrimaries(G4Event*);         
+  virtual void TerminateOneEvent();
   
-    // method to access particle gun
-    const G4ParticleGun* GetParticleGun() const { return m_particleGun; }
-  
-  private:
-    G4ParticleGun*  m_particleGun; // pointer a to G4 gun class
-    G4Box* m_world;
+private:
+  SharedData*  m_sd;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

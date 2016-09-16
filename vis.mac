@@ -73,9 +73,9 @@
 # Name
 /vis/set/textColour green
 /vis/set/textLayout right
-/vis/scene/add/text2D 0.9 -.9 24 ! ! exampleB1
+/vis/scene/add/text2D 0.9 -.9 24 ! ! ZDC
 # or, if your system does not support right-adjustment
-#/vis/scene/add/text2D 0 -.9 24 ! ! exampleB1
+#/vis/scene/add/text2D 0 -.9 24 ! ! ZDC
 /vis/set/textLayout    # Revert to normal (left adjusted) layout
 /vis/set/textColour    # Revert to default text colour (blue)
 #
@@ -94,15 +94,11 @@
 /vis/set/colour        # Revert to default colour (white)
 /vis/set/lineWidth     # Revert to default line width (1.)
 #
-# Attach text to one edge of Shape1, with a small, fixed offset
-# /vis/scene/add/text 0 6 -4 cm 18 4 4 Shape1
-# Attach text to one corner of Shape2, with a small, fixed offset
-# /vis/scene/add/text 6 7 10 cm 18 4 4 Shape2
 #
 # To get nice view
-/vis/geometry/set/visibility World 0 false
+# /vis/geometry/set/visibility World 0 false
 /vis/viewer/set/hiddenMarker true
-/vis/viewer/set/viewpointThetaPhi 120 150
+/vis/viewer/set/viewpointThetaPhi 270 90
 #
 # Re-establish auto refreshing and verbosity:
 /vis/viewer/set/autoRefresh true

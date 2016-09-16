@@ -34,8 +34,15 @@
 #include "SharedData.hh"
 
 #include "MyRunManager.hh"
+
+#ifdef G4MULTITHREADED
+#include "G4MTRunManager.hh"
+#else
+#include "G4RunManager.hh"
+#endif
+
 #include "G4UImanager.hh"
-#include "QBBC.hh"
+#include "FTFP_BERT.hh"
 
 #include "G4VisExecutive.hh"
 #include "G4UIExecutive.hh"
@@ -73,9 +80,15 @@ int main(int argc,char** argv)
   // Create SharedData and Run Manager
   SharedData* sharedData = new SharedData( outputName, cfgName.Data() );
   sharedData->Initialize();
-  
-  MyRunManager* runManager = new MyRunManager( sharedData );
-  //G4RunManager* runManager = new G4RunManager();
+
+  // Construct the default run manager
+  //
+#ifdef G4MULTITHREADED
+  G4MTRunManager* runManager = new MyRunManager( sharedData );
+  runManager->SetNumberOfThreads(7);
+#else
+  G4RunManager* runManager = new MyRunManager( sharedData );
+#endif
   
   // Set mandatory initialization classes
   //
@@ -83,7 +96,7 @@ int main(int argc,char** argv)
   runManager->SetUserInitialization(new DetectorConstruction( sharedData ) );
   
   // Physics list
-  // G4VModularPhysicsList* physicsList = new QBBC;
+  // G4VModularPhysicsList* physicsList = new FTFP_BERT;
   PhysicsList* physicsList = new PhysicsList();
   physicsList->SetVerboseLevel(1);
   runManager->SetUserInitialization(physicsList);
