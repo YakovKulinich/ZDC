@@ -108,6 +108,10 @@ int main(int argc,char** argv)
   TEnv* config = sharedData->GetConfig();
   std::string physicsListName = config->GetValue("physicsList","CUSTOM");
 
+  // for now passing constructors directly
+  // if need to modify something (SetSomething)
+  // then take it out and add via this pointer.
+  G4VModularPhysicsList* physicsList = NULL;
   if( physicsListName == "CUSTOM" ){
     std::cout << "Using CUSTOM physics list" << std::endl; 
     runManager->SetUserInitialization( new PhysicsList );
