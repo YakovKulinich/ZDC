@@ -36,8 +36,6 @@
 
 class EventAction;
 
-class G4LogicalVolume;
-
 /// Stepping action class
 /// 
 
@@ -52,7 +50,6 @@ class SteppingAction : public G4UserSteppingAction
 
   private:
     EventAction*  fEventAction;
-    G4LogicalVolume* fScoringVolume;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

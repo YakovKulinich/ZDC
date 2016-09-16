@@ -23,20 +23,19 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: DetectorConstruction.hh 69565 2013-05-08 12:35:31Z gcosmo $
+// $Id: EMCal.hh 69565 2013-05-08 12:35:31Z gcosmo $
 //
-/// \file DetectorConstruction.hh
-/// \brief Definition of the DetectorConstruction class
+/// \file EMCal.hh
+/// \brief Definition of the EMCal class
 
-#ifndef DetectorConstruction_h
-#define DetectorConstruction_h 1
+#ifndef EMCal_h
+#define EMCal_h 1
 
-#include "G4VUserDetectorConstruction.hh"
 #include "globals.hh"
+#include "G4PVPlacement.hh"
 
 #include <vector>
 
-class EMCal;
 class G4Box;
 class G4Para;
 class G4VPhysicalVolume;
@@ -47,29 +46,66 @@ class SharedData;
 
 /// Detector construction class to define materials and geometry.
 
-class DetectorConstruction : public G4VUserDetectorConstruction
+class EMCal
 {
 public:
-  DetectorConstruction();
-  DetectorConstruction( SharedData* );
-  virtual ~DetectorConstruction();
+  EMCal( const std::string&, const G4RotationMatrix*,
+	 const G4ThreeVector&, G4LogicalVolume*, SharedData* );
+  EMCal();
+  ~EMCal();
   
-  virtual G4VPhysicalVolume* Construct();
+  virtual void  Construct();
+  
+  virtual void  DefineMaterials();  
+  virtual void  DefineBorderProperties();
 
-  virtual void               DefineMaterials();  
-  virtual void               DefineBorderProperties();
-
-  virtual G4VPhysicalVolume* ConstructDetector();
- 
+  virtual void  ConstructDetector();
+  
 protected:
+  const std::string    m_name;
+  
+  const G4RotationMatrix*    m_rot;
+  const G4ThreeVector        m_pos;
+
+  G4LogicalVolume*   m_logicMother;
+
   SharedData*        m_sd;
-  
+
 protected:
+  G4Material*        m_matHousing;
+  G4Material*        m_matQuartz;
+  G4Material*        m_matEmitter;
+  G4Material*        m_matReflector;
+  G4Material*        m_matAbsorber;
+
   G4Box*             m_solidWorld;
   G4LogicalVolume*   m_logicWorld;
   G4VPhysicalVolume* m_physWorld;
 
-  EMCal*             m_emCal;
+  G4Para*            m_solidHousing;
+  G4LogicalVolume*   m_logicHousing;
+  G4VPhysicalVolume* m_physHousingL;
+  G4VPhysicalVolume* m_physHousingR;
+  
+  G4Para*            m_solidChamber;
+  G4LogicalVolume*   m_logicChamber;
+  G4VPhysicalVolume* m_physChamber;
+ 
+  std::vector<G4Para*>             m_v_solidPanel;
+  std::vector<G4LogicalVolume*>    m_v_logicPanel;
+  std::vector<G4VPhysicalVolume*>  m_v_physPanel;
+  
+  std::vector<G4Para*>             m_v_solidAbsorber;
+  std::vector<G4LogicalVolume*>    m_v_logicAbsorber;
+  std::vector<G4VPhysicalVolume*>  m_v_physAbsorber;
+
+  std::vector<G4Para*>             m_v_solidQuartz;
+  std::vector<G4LogicalVolume*>    m_v_logicQuartz;
+  std::vector<G4VPhysicalVolume*>  m_v_physQuartz;
+
+  std::vector<G4Para*>             m_v_solidEmitter;
+  std::vector<G4LogicalVolume*>    m_v_logicEmitter;
+  std::vector<G4VPhysicalVolume*>  m_v_physEmitter;
   
 };
 
