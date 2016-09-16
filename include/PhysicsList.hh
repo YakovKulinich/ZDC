@@ -32,7 +32,7 @@
 #define PhysicsList_h 1
 
 #include "globals.hh"
-#include "G4VUserPhysicsList.hh"
+#include "G4VModularPhysicsList.hh"
 
 class G4Cerenkov;
 class G4Scintillation;
@@ -43,7 +43,7 @@ class G4OpBoundaryProcess;
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-class PhysicsList : public G4VUserPhysicsList
+class PhysicsList : public G4VModularPhysicsList
 {
   public:
 
