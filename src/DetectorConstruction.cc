@@ -62,9 +62,9 @@
 
 DetectorConstruction::DetectorConstruction()
   : G4VUserDetectorConstruction(), m_matHousing(0), m_matQuartz(0),
-    m_matOil(0), m_matReflector(0), m_matAbsorber(0),
+    m_matEmitter(0), m_matReflector(0), m_matAbsorber(0),
     m_solidWorld(0), m_logicWorld(0), m_physWorld(0),
-    m_solidOil(0), m_logicOil(0), m_physOil(0),
+    m_solidChamber(0), m_logicChamber(0), m_physChamber(0),
     m_scoringVolume(0),
     m_sd(NULL)
 {}
@@ -73,9 +73,9 @@ DetectorConstruction::DetectorConstruction()
 
 DetectorConstruction::DetectorConstruction( SharedData* sd )
   : G4VUserDetectorConstruction(), m_matHousing(0), m_matQuartz(0),
-    m_matOil(0), m_matReflector(0), m_matAbsorber(0),
+    m_matEmitter(0), m_matReflector(0), m_matAbsorber(0),
     m_solidWorld(0), m_logicWorld(0), m_physWorld(0),
-    m_solidOil(0), m_logicOil(0), m_physOil(0),
+    m_solidChamber(0), m_logicChamber(0), m_physChamber(0),
     m_scoringVolume(0),
     m_sd( sd )
 {}
@@ -83,11 +83,6 @@ DetectorConstruction::DetectorConstruction( SharedData* sd )
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 DetectorConstruction::~DetectorConstruction()
-{ }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void DetectorConstruction::InitializeParameters()
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -103,7 +98,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct(){
     G4LogicalBorderSurface::CleanSurfaceTable();
   }
   
-  InitializeParameters();
   DefineMaterials();
   return ConstructDetector();
 }
@@ -123,10 +117,24 @@ void DetectorConstruction::DefineMaterials()
   //----------------------------------------------
   m_matHousing   = nist->FindOrBuildMaterial("G4_Al");
   m_matQuartz    = nist->FindOrBuildMaterial("G4_SILICON_DIOXIDE");
-  m_matOil       = nist->FindOrBuildMaterial("G4_WATER");
-  m_matReflector = nist->FindOrBuildMaterial("G4_Au"); 
   m_matAbsorber  = nist->FindOrBuildMaterial("G4_W");
-  
+
+  std::string matReflectorName = config->GetValue("reflectorType","Au");
+  if( matReflectorName == "Au" ){  
+    m_matReflector = nist->FindOrBuildMaterial("G4_Au"); 
+  } else if ( matReflectorName == "Al" ){
+    m_matReflector = nist->FindOrBuildMaterial("G4_Al"); 
+  } else{  // default
+    m_matReflector = nist->FindOrBuildMaterial("G4_Au"); 
+  }
+
+  std::string matEmitterName = config->GetValue("emitterType","WATER");
+  if( matEmitterName == "WATER" ){
+    m_matEmitter = nist->FindOrBuildMaterial("G4_WATER");
+  } else{  // default
+    m_matEmitter = nist->FindOrBuildMaterial("G4_WATER"); 
+  }
+ 
   //----------------------------------------------     
   // Define Material Properties
   //----------------------------------------------
@@ -134,18 +142,18 @@ void DetectorConstruction::DefineMaterials()
   
   G4double ephoton         [NUMENTRIES] = {2.00*eV,4.80*eV};
 
-  G4double rindexOil       [NUMENTRIES] = {1.48,1.48};
-  G4double absorptionOil   [NUMENTRIES] = {26*m,26*m};
+  G4double rindexEmitter       [NUMENTRIES] = {1.48,1.48};
+  G4double absorptionEmitter   [NUMENTRIES] = {26*m,26*m};
 
   G4double rindexQuartz    [NUMENTRIES] = {1.46,1.46};
   G4double absorptionQuartz[NUMENTRIES] = {46*m,46*m};
 
   //Fill in the Marterial properties table for each material.
   //Guide for undestanding Optical processes at http://geant4.web.cern.ch/geant4/UserDocumentation/UsersGuides/ForApplicationDeveloper/html/ch05s02.html#sect.PhysProc.Photo
-  G4MaterialPropertiesTable *oilMPT = new G4MaterialPropertiesTable();
-  oilMPT->AddProperty("RINDEX",ephoton,rindexOil,NUMENTRIES);
-  oilMPT->AddProperty("ABSLENGTH",ephoton,absorptionOil,NUMENTRIES);
-  m_matOil->SetMaterialPropertiesTable(oilMPT);
+  G4MaterialPropertiesTable *emitterMPT = new G4MaterialPropertiesTable();
+  emitterMPT->AddProperty("RINDEX",ephoton,rindexEmitter,NUMENTRIES);
+  emitterMPT->AddProperty("ABSLENGTH",ephoton,absorptionEmitter,NUMENTRIES);
+  m_matEmitter->SetMaterialPropertiesTable(emitterMPT);
 
   G4MaterialPropertiesTable *quartzMPT = new G4MaterialPropertiesTable();
   quartzMPT->AddProperty("RINDEX",ephoton,rindexQuartz,NUMENTRIES);
@@ -263,19 +271,19 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
 	      0.5*worldSizeZ );   
   
   m_logicWorld =                         
-    new G4LogicalVolume(m_solidWorld,      //its solid
-                        g4Air,             //its material
-                        "World");          //its name
+    new G4LogicalVolume(m_solidWorld,     //its solid
+                        g4Air,            //its material
+                        "World");         //its name
                                    
   m_physWorld = 
-    new G4PVPlacement(0,                   //no rotation
-                      G4ThreeVector(),     //at (0,0,0)
-                      m_logicWorld,        //its logical volume
-                      "World",             //its name
-                      0,                   //its mother  volume
-                      false,               //no boolean operation
-                      0,                   //copy number
-                      checkOverlaps);      //overlaps checking
+    new G4PVPlacement(0,                  //no rotation
+                      G4ThreeVector(),    //at (0,0,0)
+                      m_logicWorld,       //its logical volume
+                      "World",            //its name
+                      0,                  //its mother  volume
+                      false,              //no boolean operation
+                      0,                  //copy number
+                      checkOverlaps);     //overlaps checking
 
   //----------------------------------------------     
   // variables ending in prime are
@@ -289,17 +297,12 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
   //----------------------------------------------  
   G4double moduleHalfSizeX       = 0.5 * moduleSizeX;
   G4double moduleHalfSizeXprime  = moduleHalfSizeX / TMath::Cos(theta);
-
   G4double moduleSizeZprime  = moduleSizeZ * TMath::Cos(theta);
-  
+
+  // Variables used as input to G4Para
   G4double housingSizeX      = moduleHalfSizeXprime;
   G4double housingSizeY      = moduleSizeY;
   G4double housingSizeZ      = moduleSizeZprime;
-
-  printf("\n");  
-  printf("housingSizeX = %f\n", housingSizeX);
-  printf("housingSizeY = %f\n", housingSizeY);
-  printf("housingSizeZ = %f\n", housingSizeZ);
   
   m_solidHousing =    
     new G4Para("Housing",               //its name
@@ -309,9 +312,9 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
 	       0, theta, 0 );              
   
   m_logicHousing =                         
-    new G4LogicalVolume(m_solidHousing,      //its solid
-                        m_matHousing,        //its material
-                        "Housing");          //its name
+    new G4LogicalVolume(m_solidHousing,    //its solid
+                        m_matHousing,      //its material
+                        "Housing");        //its name
 
   G4RotationMatrix* rotModuleL = new G4RotationMatrix();
   rotModuleL->rotateY( theta*rad );
@@ -331,6 +334,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
                       false,               //no boolean operation
                       0,                   //copy number
                       checkOverlaps);      //overlaps checking
+  
   m_physHousingR = 
     new G4PVPlacement(rotModuleR,     
                       G4ThreeVector( +housingPosX, 0, 0),
@@ -341,50 +345,43 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
                       1,                   //copy number
                       checkOverlaps);      //overlaps checking
   //----------------------------------------------     
-  // Oil
+  // Chamber
   //----------------------------------------------
   G4double chamberHalfSizeX      = moduleHalfSizeX - housingThickness;
   G4double chamberHalfSizeXprime = chamberHalfSizeX / TMath::Cos(theta);
+  G4double chamberSizeZprime     = moduleSizeZprime - 2 * housingThickness;
   
-  G4double chamberSizeY        = moduleSizeY - 2 * housingThickness;
-  G4double chamberSizeZprime   = moduleSizeZprime - 2 * housingThickness;
+  // Variables used as input to G4Para
+  G4double chamberSizeX      = chamberHalfSizeXprime;
+  G4double chamberSizeY      = moduleSizeY - 2 * housingThickness;
+  G4double chamberSizeZ      = chamberSizeZprime;
 
-  G4double oilSizeX      = chamberHalfSizeXprime;
-  G4double oilSizeY      = chamberSizeY;
-  G4double oilSizeZ      = chamberSizeZprime;
-
-  printf("\n");  
-  printf("oilSizeX = %f\n", oilSizeX);
-  printf("oilSizeY = %f\n", oilSizeY);
-  printf("oilSizeZ = %f\n", oilSizeZ);
-
-  
-  m_solidOil =    
-    new G4Para("Oil",             //its name
-	       0.5 * oilSizeX,      // its size
-	       0.5 * oilSizeY,
-	       0.5 * oilSizeZ,
+   m_solidChamber =    
+    new G4Para("Chamber",            //its name
+	       0.5 * chamberSizeX,   // its size
+	       0.5 * chamberSizeY,
+	       0.5 * chamberSizeZ,
 	       0, theta, 0);  
   
-  m_logicOil =                         
-    new G4LogicalVolume(m_solidOil,          //its solid
-                        m_matOil,            //its material
-                        "Oil");              //its name
+  m_logicChamber =                         
+    new G4LogicalVolume(m_solidChamber,    //its solid
+                        g4Air,             //its material
+                        "Chamber");        //its name
 
-  double oilPosX = 0.5 * housingThickness / TMath::Cos(theta);
+  double chamberPosX = 0.5 * housingThickness / TMath::Cos(theta);
   
-  m_physOil = 
-    new G4PVPlacement(0,                      //no rotation
-                      G4ThreeVector( oilPosX, 0, 0 ), 
-                      m_logicOil,             //its logical volume
-                      "Oil",                  //its name
-                      m_logicHousing,         //its mother  volume
-                      false,                  //no boolean operation
-                      0,                      //copy number
+  m_physChamber = 
+    new G4PVPlacement(0,                    //no rotation
+                      G4ThreeVector( chamberPosX, 0, 0 ), 
+                      m_logicChamber,       //its logical volume
+                      "Chamber",            //its name
+                      m_logicHousing,       //its mother  volume
+                      false,                //no boolean operation
+                      0,                    //copy number
                       checkOverlaps);       //overlaps checking
   
-  G4VisAttributes* oilColor = new G4VisAttributes( G4Colour::Magenta() );
-  m_logicOil->SetVisAttributes( oilColor );
+  G4VisAttributes* chamberColor = new G4VisAttributes( G4Colour::Gray() );
+  m_logicChamber->SetVisAttributes( chamberColor );
 
   //----------------------------------------------     
   // Build Plates with Reflectors 
@@ -393,38 +390,23 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
   double zCoordPrimePanel =  0.5 * chamberSizeZprime - dZprimePanel;  
   double zStepPrimePanel  =  (totalThicknessZ + gapThicknessZ) * TMath::Cos(theta);
 
-  printf(" 0.5 chamberSizeZprime = %f\n", 0.5 * chamberSizeZprime );
-  printf(" 0.5 chamberSizeXprime = %f\n", chamberHalfSizeXprime  );
-  printf(" totalThicknessZ  = %f\n", totalThicknessZ );
-  printf(" zStepPrimePanel  = %f\n", zStepPrimePanel );
-  printf(" zCoordPrimePanel = %f\n", zCoordPrimePanel );
-  printf(" theta            = %f\n", theta );
-  printf(" tanTheta         = %f\n", TMath::Tan( theta ) );
-  
   std::vector< std::pair<G4double, G4double> > panelCoords;
  
   while( zCoordPrimePanel > -0.5 * chamberSizeZprime + dZprimePanel){
-    printf("\n-----Panel-----\n");
-    printf("zCoordPrimePanel=%5.1f ", zCoordPrimePanel );
-
     double xCoord = zCoordPrimePanel * TMath::Tan( theta );;
-    
     panelCoords.emplace_back( xCoord, zCoordPrimePanel);
-
-    printf( "(x,z) = (%5.1f,%5.1f)\n",
-	    panelCoords.back().first,
-	    panelCoords.back().second );
-    
     zCoordPrimePanel -= zStepPrimePanel; 
   }
 
   //----------------------------------------------     
   // Plates
   //----------------------------------------------
+  // Variables used as input to G4Para
   G4double absorberSizeX  = chamberHalfSizeXprime;
   G4double absorberSizeY  = chamberSizeY;
   G4double absorberSizeZ  = absorberThicknessZ * TMath::Cos(theta);
-  
+
+  // Variables used as input to G4Para
   G4double panelSizeX     = chamberHalfSizeXprime;
   G4double panelSizeY     = absorberSizeY;
   G4double panelSizeZ     = totalThicknessZ * TMath::Cos(theta);
@@ -469,7 +451,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
 						  panelCoords.at(cn).second ),
 				   m_v_logicPanel.back(),  //its logical volume
 				   "Panel",                //its name
-				   m_logicOil,             //its mother  volume
+				   m_logicChamber,         //its mother  volume
 				   false,                  //no boolean operation
 				   cn,                     //copy number
 				   checkOverlaps) );       //overlaps checking
@@ -489,8 +471,8 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
   //----------------------------------------------     
   // Quartz Coordinates
   //----------------------------------------------
-  G4double quartzThickness      = config->GetValue("quartzThickness", 2);
-  G4double quartzThicknessPrime = quartzThickness / TMath::Cos(theta);
+  G4double quartzThickness   = config->GetValue("quartzThickness", 2);
+  G4double quartzSizeXPrime  = quartzThickness / TMath::Cos(theta);
   
   G4double dZprimeQuartz     =  0.5 * gapThicknessZ * TMath::Cos(theta);
   G4double zCoordPrimeQuartz =  0.5 * chamberSizeZprime - 2*dZprimePanel - dZprimeQuartz;  
@@ -499,30 +481,20 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
   std::vector< std::pair<G4double, G4double> > quartzCoords;
  
   while( zCoordPrimeQuartz > -0.5 * chamberSizeZprime + dZprimeQuartz){
-    printf("\n-----Quartz-----\n");
-    printf("zCoordPrimeQuartz=%5.1f ", zCoordPrimeQuartz );
-
-    G4double xCoord =
-      zCoordPrimeQuartz * TMath::Tan( theta ) -
-      0.5*chamberHalfSizeXprime + 0.5 * quartzThicknessPrime;
-    
+    G4double xCoord = -0.5*chamberHalfSizeXprime + 0.5 * quartzSizeXPrime +
+      zCoordPrimeQuartz * TMath::Tan( theta );
     quartzCoords.emplace_back( xCoord, zCoordPrimeQuartz);
-
-    printf( "(x,z) = (%5.1f,%5.1f)\n",
-	    quartzCoords.back().first,
-	    quartzCoords.back().second );
-    
     zCoordPrimeQuartz -= zStepPrimeQuartz; 
   }
 
   //----------------------------------------------     
   // Quartz Placement
   //----------------------------------------------
-  G4double quartzSizeX     = quartzThicknessPrime;
+  G4double quartzSizeX     = quartzSizeXPrime;
   G4double quartzSizeY     = chamberSizeY;
   G4double quartzSizeZ     = gapThicknessZ * TMath::Cos(theta);
     
-  G4VisAttributes* quartzColor  = new G4VisAttributes( G4Colour::Blue() );
+  G4VisAttributes* quartzColor  = new G4VisAttributes( G4Colour::Cyan() );
 
   for( unsigned int cn = 0; cn < quartzCoords.size(); cn++ ){
 
@@ -547,12 +519,66 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
 						  quartzCoords.at(cn).second ),
 				   m_v_logicQuartz.back(),  //its logical volume
 				   "Quartz",                //its name
-				   m_logicOil,              //its mother  volume
+				   m_logicChamber,          //its mother  volume
 				   false,                   //no boolean operation
 				   cn,                      //copy number
 				   checkOverlaps) );        //overlaps checking
   }
+
+  //----------------------------------------------     
+  // Emitter Coordinates
+  //----------------------------------------------
+  G4double emitterThicknessPrime = chamberHalfSizeXprime - quartzSizeXPrime;
+    
+  G4double dZprimeEmitter     =  0.5 * gapThicknessZ * TMath::Cos(theta);
+  G4double zCoordPrimeEmitter =  0.5 * chamberSizeZprime - 2*dZprimePanel - dZprimeEmitter;  
+  G4double zStepPrimeEmitter  =  (totalThicknessZ + gapThicknessZ) * TMath::Cos(theta);
   
+  std::vector< std::pair<G4double, G4double> > emitterCoords;
+ 
+  while( zCoordPrimeEmitter > -0.5 * chamberSizeZprime + dZprimeEmitter){
+    G4double xCoord = 0.5*chamberHalfSizeXprime - 0.5 * emitterThicknessPrime +
+      zCoordPrimeEmitter * TMath::Tan( theta );
+    emitterCoords.emplace_back( xCoord, zCoordPrimeEmitter);
+    zCoordPrimeEmitter -= zStepPrimeEmitter; 
+  }
+
+  //----------------------------------------------     
+  // Emitter Placement
+  //----------------------------------------------
+  G4double emitterSizeX     = emitterThicknessPrime;
+  G4double emitterSizeY     = chamberSizeY;
+  G4double emitterSizeZ     = gapThicknessZ * TMath::Cos(theta);
+    
+  G4VisAttributes* emitterColor  = new G4VisAttributes( G4Colour::Magenta() );
+
+  for( unsigned int cn = 0; cn < emitterCoords.size(); cn++ ){
+    m_v_solidEmitter. 
+      push_back( new G4Para("Emitter",             //its name
+			    0.5 * emitterSizeX,    //its size
+			    0.5 * emitterSizeY,
+			    0.5 * emitterSizeZ,
+			    0, theta, 0 ) );       
+    
+    m_v_logicEmitter.
+      push_back( new G4LogicalVolume(m_v_solidEmitter.back(), //its solid
+				     m_matReflector,          //its material
+				     "Emitter") );            //its name
+
+    m_v_logicEmitter.back()->SetVisAttributes( emitterColor );
+
+    m_v_physEmitter.
+      push_back( new G4PVPlacement(0,
+				   G4ThreeVector( emitterCoords.at(cn).first,
+						  0,
+						  emitterCoords.at(cn).second ),
+				   m_v_logicEmitter.back(), //its logical volume
+				   "Emitter",               //its name
+				   m_logicChamber,          //its mother  volume
+				   false,                   //no boolean operation
+				   cn,                      //copy number
+				   checkOverlaps) );        //overlaps checking
+  }
   
   //----------------------------------------------     
   // Define Surface/Border Properties

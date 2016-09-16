@@ -29,11 +29,12 @@
 /// \brief Main program of the  example
 
 #include "DetectorConstruction.hh"
-#include "PhysicsList.hh"
 #include "ActionInitialization.hh"
 #include "SharedData.hh"
 
-#include "MyRunManager.hh"
+#include "PhysicsList.hh"
+#include "FTFP_BERT.hh"
+#include "QGSP_BERT.hh"
 
 /*
 #ifdef G4MULTITHREADED
@@ -45,7 +46,6 @@
 #include "MyRunManager.hh"
 
 #include "G4UImanager.hh"
-#include "FTFP_BERT.hh"
 
 #include "G4VisExecutive.hh"
 #include "G4UIExecutive.hh"
@@ -53,6 +53,7 @@
 #include "Randomize.hh"
 
 #include <TString.h>
+#include <TEnv.h>
 #include <iostream>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -87,6 +88,9 @@ int main(int argc,char** argv)
   // Construct the default run manager
   //
   /*
+    Does not work for now. Need to create multiple root files
+    for various nodes. Otherwise there is a crash.
+    (At least I think that is the reason)
 #ifdef G4MULTITHREADED
   G4MTRunManager* runManager = new MyMTRunManager( sharedData );
   runManager->SetNumberOfThreads(7);
@@ -101,10 +105,22 @@ int main(int argc,char** argv)
   runManager->SetUserInitialization(new DetectorConstruction( sharedData ) );
   
   // Physics list
-  // G4VModularPhysicsList* physicsList = new FTFP_BERT;
-  PhysicsList* physicsList = new PhysicsList();
-  physicsList->SetVerboseLevel(1);
-  runManager->SetUserInitialization(physicsList);
+  TEnv* config = sharedData->GetConfig();
+  std::string physicsListName = config->GetValue("physicsList","CUSTOM");
+
+  if( physicsListName == "CUSTOM" ){
+    std::cout << "Using CUSTOM physics list" << std::endl; 
+    runManager->SetUserInitialization( new PhysicsList );
+  } else if ( physicsListName == "FTFP_BERT" ) {
+    std::cout << "Using FTFP_BERT physics list" << std::endl; 
+    runManager->SetUserInitialization( new FTFP_BERT );    
+  } else if ( physicsListName == "QGSP_BERT" ) {
+    std::cout << "Using QGSP_BERT physics list" << std::endl; 
+    runManager->SetUserInitialization( new QGSP_BERT );
+  } else {   // default
+    std::cout << "Using CUSTOM physics list" << std::endl; 
+    runManager->SetUserInitialization( new PhysicsList );
+  }
     
   // User action initialization
   runManager->SetUserInitialization(new ActionInitialization());

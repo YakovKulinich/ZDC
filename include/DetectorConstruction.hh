@@ -55,9 +55,7 @@ public:
   
   virtual G4VPhysicalVolume* Construct();
 
-  virtual void               InitializeParameters();
-  virtual void               DefineMaterials();
-  
+  virtual void               DefineMaterials();  
   virtual void               DefineBorderProperties();
   virtual G4VPhysicalVolume* ConstructDetector();
   
@@ -66,7 +64,7 @@ public:
 protected:
   G4Material*        m_matHousing;
   G4Material*        m_matQuartz;
-  G4Material*        m_matOil;
+  G4Material*        m_matEmitter;
   G4Material*        m_matReflector;
   G4Material*        m_matAbsorber;
 
@@ -79,9 +77,9 @@ protected:
   G4VPhysicalVolume* m_physHousingL;
   G4VPhysicalVolume* m_physHousingR;
   
-  G4Para*            m_solidOil;
-  G4LogicalVolume*   m_logicOil;
-  G4VPhysicalVolume* m_physOil;
+  G4Para*            m_solidChamber;
+  G4LogicalVolume*   m_logicChamber;
+  G4VPhysicalVolume* m_physChamber;
  
   std::vector<G4Para*>             m_v_solidPanel;
   std::vector<G4LogicalVolume*>    m_v_logicPanel;
@@ -95,7 +93,10 @@ protected:
   std::vector<G4LogicalVolume*>    m_v_logicQuartz;
   std::vector<G4VPhysicalVolume*>  m_v_physQuartz;
 
- 
+  std::vector<G4Para*>             m_v_solidEmitter;
+  std::vector<G4LogicalVolume*>    m_v_logicEmitter;
+  std::vector<G4VPhysicalVolume*>  m_v_physEmitter;
+  
 protected:
   G4LogicalVolume*  m_scoringVolume;
   SharedData*       m_sd;
