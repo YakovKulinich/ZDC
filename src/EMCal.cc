@@ -29,6 +29,7 @@
 /// \brief Implementation of the EMCal class
 
 #include "EMCal.hh"
+#include "QuartzSD.hh"
 #include "SharedData.hh"
 
 #include "G4GeometryManager.hh"
@@ -41,6 +42,8 @@
 #include "G4MaterialTable.hh"
 
 #include "G4RunManager.hh"
+#include "G4SDManager.hh"
+
 #include "G4NistManager.hh"
 #include "G4CSGSolid.hh"
 #include "G4Box.hh"
@@ -65,10 +68,14 @@ EMCal::EMCal( const std::string& name, const G4RotationMatrix* rot,
 	      SharedData* sd )
   : m_name( name ), m_rot(rot), m_pos( pos ), m_logicMother( mother ),
     m_sd( sd ),
-    m_matHousing(0), m_matQuartz(0),
-    m_matEmitter(0), m_matReflector(0), m_matAbsorber(0),
-    m_solidWorld(0), m_logicWorld(0), m_physWorld(0),
-    m_solidChamber(0), m_logicChamber(0), m_physChamber(0)
+    m_matHousing(0)   , m_matQuartz(0),
+    m_matEmitter(0)   , m_matReflector(0), m_matAbsorber(0),
+    m_solidHousing(0) , m_logicHousing(0), m_physHousingL(0), m_physHousingR(0),
+    m_solidChamber(0) , m_logicChamber(0), m_physChamber(0),
+    m_solidPanel(0)   , m_logicPanel(0),
+    m_solidAbsorber(0), m_logicAbsorber(0),
+    m_solidQuartz(0)  , m_logicQuartz(0),
+    m_solidEmitter(0) , m_logicEmitter(0)
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -76,10 +83,14 @@ EMCal::EMCal( const std::string& name, const G4RotationMatrix* rot,
 EMCal::EMCal()
   : m_name(""), m_rot(NULL), m_pos(G4ThreeVector()), m_logicMother(NULL),
     m_sd(NULL),
-    m_matHousing(0), m_matQuartz(0),
-    m_matEmitter(0), m_matReflector(0), m_matAbsorber(0),
-    m_solidWorld(0), m_logicWorld(0), m_physWorld(0),
-    m_solidChamber(0), m_logicChamber(0), m_physChamber(0)
+    m_matHousing(0)   , m_matQuartz(0),
+    m_matEmitter(0)   , m_matReflector(0), m_matAbsorber(0),
+    m_solidHousing(0) , m_logicHousing(0), m_physHousingL(0), m_physHousingR(0),
+    m_solidChamber(0) , m_logicChamber(0), m_physChamber(0),
+    m_solidPanel(0)   , m_logicPanel(0),
+    m_solidAbsorber(0), m_logicAbsorber(0),
+    m_solidQuartz(0)  , m_logicQuartz(0),
+    m_solidEmitter(0) , m_logicEmitter(0)
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -189,8 +200,7 @@ void EMCal :: DefineBorderProperties(){
     new G4OpticalSurface("ReflectorOpSurface",unified, polished, dielectric_metal);
   reflectorOS->SetMaterialPropertiesTable( reflectorMPT );
 
-  for( auto& logicReflector : m_v_logicPanel )
-    new G4LogicalSkinSurface("reflectorSkinSurface", logicReflector, reflectorOS );
+  new G4LogicalSkinSurface("reflectorSkinSurface", m_logicPanel, reflectorOS );
     
   //----------------------------------------------     
   // Absorber Skin
@@ -206,8 +216,7 @@ void EMCal :: DefineBorderProperties(){
     new G4OpticalSurface("AbsorberOpSurface",unified, polished, dielectric_metal);
   absorberOS->SetMaterialPropertiesTable( absorberMPT );
 
-  for( auto& logicAbsorber : m_v_logicAbsorber )
-    new G4LogicalSkinSurface("absorberSkinSurface", logicAbsorber, absorberOS );
+  new G4LogicalSkinSurface("absorberSkinSurface", m_logicAbsorber, absorberOS );
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -380,60 +389,60 @@ void EMCal::ConstructDetector()
     
   G4VisAttributes* panelColor    = new G4VisAttributes( G4Colour::Yellow() );
   G4VisAttributes* absorberColor = new G4VisAttributes( G4Colour::Red() );
-  
+
+
+  m_solidPanel =
+    new G4Para("Panel",               //its name
+	       0.5 * panelSizeX,
+	       0.5 * panelSizeY,
+	       0.5 * panelSizeZ,
+	       0, theta, 0  );        //its size
+    
+  m_solidAbsorber =
+    new G4Para("Absorber",            //its name
+	       0.5*absorberSizeX,
+	       0.5*absorberSizeY,
+	       0.5*absorberSizeZ,
+	       0, theta, 0 );  
+    
+  m_logicPanel =
+    new G4LogicalVolume(m_solidPanel,      //its solid
+			m_matReflector,    //its material
+			"Panel"  );        //its name
+
+  m_logicPanel->SetVisAttributes( panelColor );
+
+  m_logicAbsorber =
+    new G4LogicalVolume(m_solidAbsorber,   //its solid
+			m_matAbsorber,     //its material
+			"Absorber" );      //its name
+    
+  m_logicAbsorber->SetVisAttributes( absorberColor );
+    
   for( unsigned int cn = 0; cn < panelCoords.size(); cn++ ){
-
-    m_v_solidPanel. 
-      push_back( new G4Para("Panel",               //its name
-			    0.5 * panelSizeX,
-			    0.5 * panelSizeY,
-			    0.5 * panelSizeZ,
-			    0, theta, 0 ) );       //its size
-    
-    m_v_solidAbsorber.
-      push_back( new G4Para("Absorber",            //its name
-			    0.5*absorberSizeX,
-			    0.5*absorberSizeY,
-			    0.5*absorberSizeZ,
-			    0, theta, 0) );  
-    
-    m_v_logicPanel.
-      push_back( new G4LogicalVolume(m_v_solidPanel.back(), //its solid
-				     m_matReflector,        //its material
-				     "Panel") );            //its name
-
-    m_v_logicPanel.back()->SetVisAttributes( panelColor );
-
-    m_v_logicAbsorber.
-      push_back( new G4LogicalVolume(m_v_solidAbsorber.back(), //its solid
-				     m_matAbsorber,            //its material
-				     "Absorber") );            //its name
-
-    m_v_logicAbsorber.back()->SetVisAttributes( absorberColor );
-    
     m_v_physPanel.
       push_back( new G4PVPlacement(0,
 				   G4ThreeVector( panelCoords.at(cn).first,
 						  0,
 						  panelCoords.at(cn).second ),
-				   m_v_logicPanel.back(),  //its logical volume
-				   "Panel",                //its name
-				   m_logicChamber,         //its mother  volume
-				   false,                  //no boolean operation
-				   cn,                     //copy number
-				   checkOverlaps) );       //overlaps checking
+				   m_logicPanel,         //its logical volume
+				   "Panel",              //its name
+				   m_logicChamber,       //its mother  volume
+				   false,                //no boolean operation
+				   cn,                   //copy number
+				   checkOverlaps ) );      //overlaps checking
 
     m_v_physAbsorber.
-      push_back( new G4PVPlacement(0,                         //no rotation
+      push_back( new G4PVPlacement(0,                     //no rotation
 				   G4ThreeVector(),
-				   m_v_logicAbsorber.back(),  //its logical volume
-				   "Absorber",                //its name
-				   m_v_logicPanel.back(),     //its mother  volume
-				   false,                     //no boolean operation
-				   cn,                        //copy number
-				   checkOverlaps) );          //overlaps checking
+				   m_logicAbsorber,       //its logical volume
+				   "Absorber",            //its name
+				   m_logicPanel,          //its mother  volume
+				   false,                 //no boolean operation
+				   cn,                    //copy number
+				   checkOverlaps) );      //overlaps checking
    
-  }
+  } // end loop placement
 
   //----------------------------------------------     
   // Quartz Coordinates
@@ -463,34 +472,32 @@ void EMCal::ConstructDetector()
     
   G4VisAttributes* quartzColor  = new G4VisAttributes( G4Colour::Cyan() );
 
-  for( unsigned int cn = 0; cn < quartzCoords.size(); cn++ ){
-
-    m_v_solidQuartz. 
-      push_back( new G4Para("Quartz",             //its name
-			    0.5 * quartzSizeX,    //its size
-			    0.5 * quartzSizeY,
-			    0.5 * quartzSizeZ,
-			    0, theta, 0 ) );       
+  m_solidQuartz = new G4Para("Quartz",             //its name
+			     0.5 * quartzSizeX,    //its size
+			     0.5 * quartzSizeY,
+			     0.5 * quartzSizeZ,
+			     0, theta, 0 );       
     
-    m_v_logicQuartz.
-      push_back( new G4LogicalVolume(m_v_solidQuartz.back(), //its solid
-				     m_matReflector,         //its material
-				     "Quartz") );            //its name
+  m_logicQuartz =
+    new G4LogicalVolume(m_solidQuartz,     //its solid
+			m_matReflector,    //its material
+			"Quartz" );        //its name
 
-    m_v_logicQuartz.back()->SetVisAttributes( quartzColor );
-
+  m_logicQuartz->SetVisAttributes( quartzColor );
+  
+  for( unsigned int cn = 0; cn < quartzCoords.size(); cn++ ){
     m_v_physQuartz.
       push_back( new G4PVPlacement(0,
 				   G4ThreeVector( quartzCoords.at(cn).first,
 						  0,
 						  quartzCoords.at(cn).second ),
-				   m_v_logicQuartz.back(),  //its logical volume
-				   "Quartz",                //its name
-				   m_logicChamber,          //its mother  volume
-				   false,                   //no boolean operation
-				   cn,                      //copy number
-				   checkOverlaps) );        //overlaps checking
-  }
+				   m_logicQuartz,       //its logical volume
+				   "Quartz",            //its name
+				   m_logicChamber,      //its mother  volume
+				   false,               //no boolean operation
+				   cn,                  //copy number
+				   checkOverlaps) );    //overlaps checking
+  } // end loop placement
 
   //----------------------------------------------     
   // Emitter Coordinates
@@ -519,42 +526,48 @@ void EMCal::ConstructDetector()
     
   G4VisAttributes* emitterColor  = new G4VisAttributes( G4Colour::Magenta() );
 
-  for( unsigned int cn = 0; cn < emitterCoords.size(); cn++ ){
-    m_v_solidEmitter. 
-      push_back( new G4Para("Emitter",             //its name
-			    0.5 * emitterSizeX,    //its size
-			    0.5 * emitterSizeY,
-			    0.5 * emitterSizeZ,
-			    0, theta, 0 ) );       
+  m_solidEmitter =
+    new G4Para("Emitter",             //its name
+	       0.5 * emitterSizeX,    //its size
+	       0.5 * emitterSizeY,
+	       0.5 * emitterSizeZ,
+	       0, theta, 0 );       
+
+  m_logicEmitter =
+    new G4LogicalVolume(m_solidEmitter,  //its solid
+			m_matReflector,    //its material
+			"Emitter" );       //its name
+
+  m_logicEmitter->SetVisAttributes( emitterColor );
     
-    m_v_logicEmitter.
-      push_back( new G4LogicalVolume(m_v_solidEmitter.back(), //its solid
-				     m_matReflector,          //its material
-				     "Emitter") );            //its name
-
-    m_v_logicEmitter.back()->SetVisAttributes( emitterColor );
-
+  
+  for( unsigned int cn = 0; cn < emitterCoords.size(); cn++ ){
     m_v_physEmitter.
       push_back( new G4PVPlacement(0,
 				   G4ThreeVector( emitterCoords.at(cn).first,
 						  0,
 						  emitterCoords.at(cn).second ),
-				   m_v_logicEmitter.back(), //its logical volume
-				   "Emitter",               //its name
-				   m_logicChamber,          //its mother  volume
-				   false,                   //no boolean operation
-				   cn,                      //copy number
-				   checkOverlaps) );        //overlaps checking
-  }
+				   m_logicEmitter,    //its logical volume
+				   "Emitter",         //its name
+				   m_logicChamber,    //its mother  volume
+				   false,             //no boolean operation
+				   cn,                //copy number
+				   checkOverlaps) );  //overlaps checking
+  } // end loop placement
   
   //----------------------------------------------     
   // Define Surface/Border Properties
   //----------------------------------------------  
   DefineBorderProperties();
-  
+
   //----------------------------------------------     
   // SD and Scoring Volumes
   //----------------------------------------------  
-  // Set Box as scoring volume
-  //
+  G4SDManager* SDman = G4SDManager::GetSDMpointer();
+
+  G4String QuartzSDname = "sPHENIX/QuartzSD";
+  QuartzSD* aQuartzSD = new QuartzSD( QuartzSDname );
+  SDman->AddNewDetector( aQuartzSD );
+  m_logicQuartz->SetSensitiveDetector( aQuartzSD );
+
 }

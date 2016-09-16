@@ -78,10 +78,6 @@ protected:
   G4Material*        m_matReflector;
   G4Material*        m_matAbsorber;
 
-  G4Box*             m_solidWorld;
-  G4LogicalVolume*   m_logicWorld;
-  G4VPhysicalVolume* m_physWorld;
-
   G4Para*            m_solidHousing;
   G4LogicalVolume*   m_logicHousing;
   G4VPhysicalVolume* m_physHousingL;
@@ -91,20 +87,20 @@ protected:
   G4LogicalVolume*   m_logicChamber;
   G4VPhysicalVolume* m_physChamber;
  
-  std::vector<G4Para*>             m_v_solidPanel;
-  std::vector<G4LogicalVolume*>    m_v_logicPanel;
+  G4Para*                          m_solidPanel;
+  G4LogicalVolume*                 m_logicPanel;
   std::vector<G4VPhysicalVolume*>  m_v_physPanel;
   
-  std::vector<G4Para*>             m_v_solidAbsorber;
-  std::vector<G4LogicalVolume*>    m_v_logicAbsorber;
+  G4Para*                          m_solidAbsorber;
+  G4LogicalVolume*                 m_logicAbsorber;
   std::vector<G4VPhysicalVolume*>  m_v_physAbsorber;
 
-  std::vector<G4Para*>             m_v_solidQuartz;
-  std::vector<G4LogicalVolume*>    m_v_logicQuartz;
+  G4Para*                          m_solidQuartz;
+  G4LogicalVolume*                 m_logicQuartz;
   std::vector<G4VPhysicalVolume*>  m_v_physQuartz;
 
-  std::vector<G4Para*>             m_v_solidEmitter;
-  std::vector<G4LogicalVolume*>    m_v_logicEmitter;
+  G4Para*                          m_solidEmitter;
+  G4LogicalVolume*                 m_logicEmitter;
   std::vector<G4VPhysicalVolume*>  m_v_physEmitter;
   
 };
