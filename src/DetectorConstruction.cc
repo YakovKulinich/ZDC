@@ -131,11 +131,10 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
   //----------------------------------------------     
   // World
   //----------------------------------------------
-  G4double worldSizeX       = 2.0 * moduleSizeX;    // mm
+  G4double worldSizeX       = 1.1 * moduleSizeX;    // mm
   G4double worldSizeY       = 1.1 * moduleSizeY;    // mm
-  G4double worldSizeZ       =
-    2.2*nModules * ( moduleSizeZ + 0.5 * moduleSizeX * TMath::Tan(theta) ); // mm
-    
+  G4double worldSizeZ       = 1.2 * nModules *
+    ( moduleSizeZ + 0.5 * moduleSizeX * TMath::Tan(theta) ); // mm
 
   G4Material* g4Air = nist->FindOrBuildMaterial("G4_AIR");
   
@@ -191,14 +190,16 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
   //----------------------------------------------     
   // Build EMCal Module
   //----------------------------------------------
+  G4double zCoord = moduleSizeZ * ( (double)nModules/2. - 0.5 );
+  G4double dZ = 10 * mm;
+  
   for(int i=0; i < nModules; ++i) {
     char name[40];
-    sprintf(name,"calorimeter%d",i);
-    double offset = -30*mm;
-    double moduleLength = moduleSizeZ + (0.5 * moduleSizeX * TMath::Tan(theta)) + offset; // mm
-    G4ThreeVector globalPos = G4ThreeVector(0,0,i*moduleLength); // 1 cm b/w modules
-    m_v_emCal.push_back(new EMCal(name, NULL, globalPos, m_logicWorld, m_sd ));
+    sprintf(name,"cal%d",i);
+    G4ThreeVector globalPos = G4ThreeVector(0, 0, zCoord ); // 1 cm b/w modules
+    m_v_emCal.push_back(new EMCal(name, i, NULL, globalPos, m_logicWorld, m_sd ));
     m_v_emCal[i]->Construct();
+    zCoord -= ( moduleSizeZ + dZ );
   }
   //----------------------------------------------     
   // SD and Scoring Volumes

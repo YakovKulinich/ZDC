@@ -42,8 +42,7 @@
 
 QuartzSD::QuartzSD(G4String name)
 :G4VSensitiveDetector(name){
-  G4String HCname;
-  collectionName.insert(HCname="QuartzCollection");
+  collectionName.insert(name);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -59,7 +58,6 @@ void QuartzSD::Initialize(G4HCofThisEvent* HCE){
   static G4int HCID = -1;
   if(HCID<0)
   { HCID = G4SDManager::GetSDMpointer()->GetCollectionID(collectionName[0]); }
- //  G4cout <<" HCid=   " << HCID << G4endl;
   HCE->AddHitsCollection( HCID, quartzCollection ); 
 }
 

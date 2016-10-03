@@ -63,10 +63,10 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-EMCal::EMCal( const std::string& name, const G4RotationMatrix* rot,
-	      const G4ThreeVector& pos, G4LogicalVolume* mother,
-	      SharedData* sd)
-  : m_name( name ), m_rot(rot), m_pos( pos ), m_logicMother( mother ),
+EMCal::EMCal( const std::string& name, const int cn,
+	      const G4RotationMatrix* rot, const G4ThreeVector& pos,
+	      G4LogicalVolume* mother, SharedData* sd)
+  : m_name( name ), m_copyNumber( cn ), m_rot(rot), m_pos( pos ), m_logicMother( mother ),
     m_sd( sd ),
     m_matHousing(0)   , m_matQuartz(0),
     m_matEmitter(0)   , m_matReflector(0), m_matAbsorber(0),
@@ -81,7 +81,7 @@ EMCal::EMCal( const std::string& name, const G4RotationMatrix* rot,
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 EMCal::EMCal()
-  : m_name(""), m_rot(NULL), m_pos(G4ThreeVector()), m_logicMother(NULL),
+  : m_name(""), m_copyNumber( 0 ), m_rot(NULL), m_pos(G4ThreeVector()), m_logicMother(NULL),
     m_sd(NULL), 
     m_matHousing(0)   , m_matQuartz(0),
     m_matEmitter(0)   , m_matReflector(0), m_matAbsorber(0),
@@ -315,7 +315,7 @@ void EMCal::ConstructDetector()
                       "Housing",           //its name
                       m_logicMother,       //its mother  volume
                       false,               //no boolean operation
-                      0,                   //copy number
+                      0 + m_copyNumber*2,  //copy number
                       checkOverlaps);      //overlaps checking
   
   m_physHousingR = 
@@ -325,7 +325,7 @@ void EMCal::ConstructDetector()
                       "Housing",           //its name
                       m_logicMother,       //its mother  volume
                       false,               //no boolean operation
-                      1,                   //copy number
+                      1 + m_copyNumber*2,  //copy number
                       checkOverlaps);      //overlaps checking
   std::cout << "DONE PLACING HOUSING" << std::endl;
   
@@ -373,14 +373,16 @@ void EMCal::ConstructDetector()
   //----------------------------------------------     
   // Build Plates with Reflectors 
   //----------------------------------------------
-  double dZprimePanel     =  0.5 * totalThicknessZ * TMath::Cos(theta);
-  double zCoordPrimePanel =  0.5 * chamberSizeZprime - dZprimePanel;  
-  double zStepPrimePanel  =  (totalThicknessZ + gapThicknessZ) * TMath::Cos(theta);
+  G4double dZprimePanel     =  0.5 * totalThicknessZ * TMath::Cos(theta);
+  G4double dZprimeEmitter   =  0.5 * gapThicknessZ * TMath::Cos(theta);
+
+  G4double zCoordPrimePanel =  0.5 * chamberSizeZprime - 2*dZprimeEmitter- dZprimePanel;  
+  G4double zStepPrimePanel  =  (totalThicknessZ + gapThicknessZ) * TMath::Cos(theta);
 
   std::vector< std::pair<G4double, G4double> > panelCoords;
  
   while( zCoordPrimePanel > -0.5 * chamberSizeZprime + dZprimePanel){
-    double xCoord = zCoordPrimePanel * TMath::Tan( theta );;
+    G4double xCoord = zCoordPrimePanel * TMath::Tan( theta );;
     panelCoords.emplace_back( xCoord, zCoordPrimePanel);
     zCoordPrimePanel -= zStepPrimePanel; 
   }
@@ -462,7 +464,7 @@ void EMCal::ConstructDetector()
   G4double quartzSizeXPrime  = quartzThickness / TMath::Cos(theta);
   
   G4double dZprimeQuartz     =  0.5 * gapThicknessZ * TMath::Cos(theta);
-  G4double zCoordPrimeQuartz =  0.5 * chamberSizeZprime - 2*dZprimePanel - dZprimeQuartz;  
+  G4double zCoordPrimeQuartz =  0.5 * chamberSizeZprime - dZprimeQuartz;  
   G4double zStepPrimeQuartz  =  (totalThicknessZ + gapThicknessZ) * TMath::Cos(theta);
   
   std::vector< std::pair<G4double, G4double> > quartzCoords;
@@ -514,9 +516,8 @@ void EMCal::ConstructDetector()
   // Emitter Coordinates
   //----------------------------------------------
   G4double emitterThicknessPrime = chamberHalfSizeXprime - quartzSizeXPrime;
-    
-  G4double dZprimeEmitter     =  0.5 * gapThicknessZ * TMath::Cos(theta);
-  G4double zCoordPrimeEmitter =  0.5 * chamberSizeZprime - 2*dZprimePanel - dZprimeEmitter;  
+
+  G4double zCoordPrimeEmitter =  0.5 * chamberSizeZprime - dZprimeEmitter;  
   G4double zStepPrimeEmitter  =  (totalThicknessZ + gapThicknessZ) * TMath::Cos(theta);
   
   std::vector< std::pair<G4double, G4double> > emitterCoords;
@@ -546,8 +547,8 @@ void EMCal::ConstructDetector()
 
   m_logicEmitter =
     new G4LogicalVolume(m_solidEmitter,  //its solid
-			m_matReflector,    //its material
-			"Emitter" );       //its name
+			m_matReflector,  //its material
+			"Emitter" );     //its name
 
   m_logicEmitter->SetVisAttributes( emitterColor );
     
@@ -574,12 +575,12 @@ void EMCal::ConstructDetector()
   //----------------------------------------------     
   // SD and Scoring Volumes
   //----------------------------------------------
-  /*
+  
   G4SDManager* SDman = G4SDManager::GetSDMpointer();
 
-  G4String QuartzSDname = "sPHENIX/QuartzSD";
-  QuartzSD* aQuartzSD = new QuartzSD( QuartzSDname );
+  char quartzSDname[256];
+  sprintf( quartzSDname, "QuartzSD%d", m_copyNumber);
+  QuartzSD* aQuartzSD = new QuartzSD( quartzSDname );
   SDman->AddNewDetector( aQuartzSD );
   m_logicQuartz->SetSensitiveDetector( aQuartzSD );
-  */
 }

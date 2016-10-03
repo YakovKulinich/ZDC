@@ -49,8 +49,9 @@ class SharedData;
 class EMCal
 {
 public:
-  EMCal( const std::string&, const G4RotationMatrix*,
-	 const G4ThreeVector&, G4LogicalVolume*, SharedData*);
+  EMCal( const std::string&, const int,
+	 const G4RotationMatrix*, const G4ThreeVector&,
+	 G4LogicalVolume*, SharedData*);
   EMCal();
   ~EMCal();
   
@@ -63,6 +64,7 @@ public:
   
 protected:
   const std::string    m_name;
+  const int            m_copyNumber;
   
   const G4RotationMatrix*    m_rot;
   const G4ThreeVector        m_pos;
@@ -101,8 +103,7 @@ protected:
 
   G4Para*                          m_solidEmitter;
   G4LogicalVolume*                 m_logicEmitter;
-  std::vector<G4VPhysicalVolume*>  m_v_physEmitter;
-  
+  std::vector<G4VPhysicalVolume*>  m_v_physEmitter;  
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
