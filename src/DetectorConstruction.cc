@@ -122,7 +122,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
   G4double moduleSizeX         = config->GetValue( "moduleSizeX", 90);
   G4double moduleSizeY         = config->GetValue( "moduleSizeY", 180);
   G4double moduleSizeZ         = config->GetValue( "moduleSizeZ", 150);
-
+  G4int    nModules            = config->GetValue( "nModules",4);
 
   // Option to switch on/off checking of volumes overlaps
   //
@@ -131,15 +131,15 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
   //----------------------------------------------     
   // World
   //----------------------------------------------
-  G4double worldSizeX       = 1.2 * moduleSizeX;    // mm
+  G4double worldSizeX       = 2.0 * moduleSizeX;    // mm
   G4double worldSizeY       = 1.1 * moduleSizeY;    // mm
   G4double worldSizeZ       =
-    1.1 * ( moduleSizeZ + 0.5 * moduleSizeX * TMath::Tan(theta) ); // mm
+    2.2*nModules * ( moduleSizeZ + 0.5 * moduleSizeX * TMath::Tan(theta) ); // mm
     
 
   G4Material* g4Air = nist->FindOrBuildMaterial("G4_AIR");
   
-  printf( "Building world with %5.1f x %5.1f x %5.1f\n",
+  printf( "Building world with x %5.1f y %5.1f z %5.1f\n",
 	  worldSizeX, worldSizeY, worldSizeZ );
   
   m_solidWorld =    
@@ -162,13 +162,44 @@ G4VPhysicalVolume* DetectorConstruction::ConstructDetector()
                       false,              //no boolean operation
                       0,                  //copy number
                       checkOverlaps);     //overlaps checking
+  /*
+  // TEST BOX
+   G4Box *testBox =    
+    new G4Box("testBox",              //its name
+	      45*mm,       //its size
+	      90*mm,
+	      5*mm );   
+  
+  G4LogicalVolume *testLogic =                         
+    new G4LogicalVolume(testBox,     //its solid
+                        g4Air,            //its material
+                        "testVol");         //its name
+                                   
+  G4PVPlacement *testPhys = 
+    new G4PVPlacement(0,                  //no rotation
+                      G4ThreeVector(),    //at (0,0,0)
+                      testLogic,       //its logical volume
+                      "testLogic",            //its name
+                      m_logicWorld,                  //its mother  volume
+                      false,              //no boolean operation
+                      0,                  //copy number
+                      checkOverlaps);     //overlaps checking
 
+  */
+
+  
   //----------------------------------------------     
   // Build EMCal Module
   //----------------------------------------------
-  m_emCal = new EMCal("EMCAL1", NULL, G4ThreeVector(), m_logicWorld, m_sd );
-  m_emCal->Construct();
-  
+  for(int i=0; i < nModules; ++i) {
+    char name[40];
+    sprintf(name,"calorimeter%d",i);
+    double offset = -30*mm;
+    double moduleLength = moduleSizeZ + (0.5 * moduleSizeX * TMath::Tan(theta)) + offset; // mm
+    G4ThreeVector globalPos = G4ThreeVector(0,0,i*moduleLength); // 1 cm b/w modules
+    m_v_emCal.push_back(new EMCal(name, NULL, globalPos, m_logicWorld, m_sd ));
+    m_v_emCal[i]->Construct();
+  }
   //----------------------------------------------     
   // SD and Scoring Volumes
   //----------------------------------------------  

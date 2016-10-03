@@ -50,7 +50,7 @@ class EMCal
 {
 public:
   EMCal( const std::string&, const G4RotationMatrix*,
-	 const G4ThreeVector&, G4LogicalVolume*, SharedData* );
+	 const G4ThreeVector&, G4LogicalVolume*, SharedData*);
   EMCal();
   ~EMCal();
   

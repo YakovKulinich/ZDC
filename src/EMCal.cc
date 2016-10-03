@@ -65,7 +65,7 @@
 
 EMCal::EMCal( const std::string& name, const G4RotationMatrix* rot,
 	      const G4ThreeVector& pos, G4LogicalVolume* mother,
-	      SharedData* sd )
+	      SharedData* sd)
   : m_name( name ), m_rot(rot), m_pos( pos ), m_logicMother( mother ),
     m_sd( sd ),
     m_matHousing(0)   , m_matQuartz(0),
@@ -82,7 +82,7 @@ EMCal::EMCal( const std::string& name, const G4RotationMatrix* rot,
 
 EMCal::EMCal()
   : m_name(""), m_rot(NULL), m_pos(G4ThreeVector()), m_logicMother(NULL),
-    m_sd(NULL),
+    m_sd(NULL), 
     m_matHousing(0)   , m_matQuartz(0),
     m_matEmitter(0)   , m_matReflector(0), m_matAbsorber(0),
     m_solidHousing(0) , m_logicHousing(0), m_physHousingL(0), m_physHousingR(0),
@@ -131,9 +131,20 @@ void EMCal::DefineMaterials()
     m_matReflector = nist->FindOrBuildMaterial("G4_Au"); 
   }
 
-  std::string matEmitterName = config->GetValue("emitterType","WATER");
-  if( matEmitterName == "WATER" ){
-    m_matEmitter = nist->FindOrBuildMaterial("G4_WATER");
+  G4int natomsC = 16;
+  G4int natomsH = 26;
+  G4int ncomponents = 2;
+  G4double density = 0.85*g/mL; 
+  std::string matEmitterName = config->GetValue("emitterType","LAB");
+  
+  if( matEmitterName == "LAB" ){
+    G4double a = 12.011 *g/mole;
+    G4Element *C = new G4Element("Carbon","C",6,a);
+    a = 1.008 * g/mole;
+    G4Element *H = new G4Element("Hydrogen","H",1,a);
+    m_matEmitter = new G4Material(matEmitterName,density,ncomponents);
+    m_matEmitter->AddElement(C,natomsC);
+    m_matEmitter->AddElement(H,natomsH);
   } else{  // default
     m_matEmitter = nist->FindOrBuildMaterial("G4_WATER"); 
   }
@@ -292,7 +303,7 @@ void EMCal::ConstructDetector()
 
   G4ThreeVector housingPosVL =
     m_pos + G4ThreeVector( -housingPosX, 0, 0 );
-
+  std::cout << "mpos " << m_pos << " total pos " << housingPosVL << std::endl;
   G4ThreeVector housingPosVR =
     m_pos + G4ThreeVector( +housingPosX, 0, 0 );
  
@@ -348,7 +359,7 @@ void EMCal::ConstructDetector()
   
   m_physChamber = 
     new G4PVPlacement(0,                    //no rotation
-                      G4ThreeVector( chamberPosX, 0, 0 ), 
+                      G4ThreeVector(chamberPosX, 0, 0 ), 
                       m_logicChamber,       //its logical volume
                       "Chamber",            //its name
                       m_logicHousing,       //its mother  volume
@@ -562,12 +573,13 @@ void EMCal::ConstructDetector()
 
   //----------------------------------------------     
   // SD and Scoring Volumes
-  //----------------------------------------------  
+  //----------------------------------------------
+  /*
   G4SDManager* SDman = G4SDManager::GetSDMpointer();
 
   G4String QuartzSDname = "sPHENIX/QuartzSD";
   QuartzSD* aQuartzSD = new QuartzSD( QuartzSDname );
   SDman->AddNewDetector( aQuartzSD );
   m_logicQuartz->SetSensitiveDetector( aQuartzSD );
-
+  */
 }

@@ -65,11 +65,10 @@ protected:
   SharedData*        m_sd;
   
 protected:
-  G4Box*             m_solidWorld;
-  G4LogicalVolume*   m_logicWorld;
-  G4VPhysicalVolume* m_physWorld;
-
-  EMCal*             m_emCal;
+  G4Box*               m_solidWorld;
+  G4LogicalVolume*     m_logicWorld;
+  G4VPhysicalVolume*   m_physWorld;
+  std::vector<EMCal*>  m_v_emCal;
   
 };
 

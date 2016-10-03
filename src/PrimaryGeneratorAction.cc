@@ -55,10 +55,10 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
   G4String particleName;
   G4ParticleDefinition* particle
-    = particleTable->FindParticle(particleName="e+");
+    = particleTable->FindParticle(particleName="neutron");
   m_particleGun->SetParticleDefinition(particle);
   m_particleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,-1.));
-  m_particleGun->SetParticleEnergy(10.* MeV);
+  m_particleGun->SetParticleEnergy(500.* GeV);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -106,8 +106,12 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   G4double size = 0.25; 
   G4double x0 = size * worldSizeX * (G4UniformRand()-0.5);
   G4double y0 = size * worldSizeY * (G4UniformRand()-0.5);
-  G4double z0 = 0.30 * worldSizeZ;
-  
+  //    G4double z0 = 0.30 * worldSizeZ;
+  //  G4double z0 = 840*mm;
+    G4double z0 = 750*mm;
+    x0 = 0;
+    y0 = 0;
+  std::cout << "x " << x0 << " y " << y0 << " z " << z0 << std::endl; 
   m_particleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
 
   m_particleGun->GeneratePrimaryVertex(anEvent);

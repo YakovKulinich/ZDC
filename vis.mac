@@ -55,13 +55,18 @@
 #/vis/scene/add/hits
 #
 # To draw only gammas:
-#/vis/filtering/trajectories/create/particleFilter
-#/vis/filtering/trajectories/particleFilter-0/add gamma
+/vis/filtering/trajectories/create/particleFilter
+/vis/filtering/trajectories/particleFilter-0/add gamma
 #
 # To invert the above, drawing all particles except gammas,
 # keep the above two lines but also add:
-#/vis/filtering/trajectories/particleFilter-0/invert true
-#
+/vis/filtering/trajectories/particleFilter-0/invert true
+#  To increase display limit
+/vis/ogl/set/displayListLimit 5000000
+# to filter out uncharge particles
+/vis/filtering/trajectories/create/chargeFilter
+/vis/filtering/trajectories/chargeFilter-0/add 1
+/vis/filtering/trajectories/chargeFilter-0/add -1
 # Many other options are available with /vis/modeling and /vis/filtering.
 # For example, to select colour by particle ID:
 #/vis/modeling/trajectories/create/drawByParticleID
