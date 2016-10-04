@@ -29,7 +29,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #include "globals.hh"
-#include "PhysicsList.hh"
+#include "OpticPhysicsList.hh"
 
 #include "G4ParticleDefinition.hh"
 #include "G4ParticleTypes.hh"
@@ -54,18 +54,18 @@
 #include "G4LossTableManager.hh"
 #include "G4EmSaturation.hh"
 
-G4ThreadLocal G4int PhysicsList::fVerboseLevel = 1;
-G4ThreadLocal G4int PhysicsList::fMaxNumPhotonStep = 20;
-G4ThreadLocal G4Cerenkov* PhysicsList::fCerenkovProcess = 0;
-G4ThreadLocal G4Scintillation* PhysicsList::fScintillationProcess = 0;
-G4ThreadLocal G4OpAbsorption* PhysicsList::fAbsorptionProcess = 0;
-G4ThreadLocal G4OpRayleigh* PhysicsList::fRayleighScatteringProcess = 0;
-G4ThreadLocal G4OpMieHG* PhysicsList::fMieHGScatteringProcess = 0;
-G4ThreadLocal G4OpBoundaryProcess* PhysicsList::fBoundaryProcess = 0;
+G4ThreadLocal G4int OpticPhysicsList::fVerboseLevel = 1;
+G4ThreadLocal G4int OpticPhysicsList::fMaxNumPhotonStep = 20;
+G4ThreadLocal G4Cerenkov* OpticPhysicsList::fCerenkovProcess = 0;
+G4ThreadLocal G4Scintillation* OpticPhysicsList::fScintillationProcess = 0;
+G4ThreadLocal G4OpAbsorption* OpticPhysicsList::fAbsorptionProcess = 0;
+G4ThreadLocal G4OpRayleigh* OpticPhysicsList::fRayleighScatteringProcess = 0;
+G4ThreadLocal G4OpMieHG* OpticPhysicsList::fMieHGScatteringProcess = 0;
+G4ThreadLocal G4OpBoundaryProcess* OpticPhysicsList::fBoundaryProcess = 0;
  
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-PhysicsList::PhysicsList() 
+OpticPhysicsList::OpticPhysicsList() 
   : G4VUserPhysicsList()
 {
   fVerboseLevel     = true;
@@ -74,11 +74,11 @@ PhysicsList::PhysicsList()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-PhysicsList::~PhysicsList() {}
+OpticPhysicsList::~OpticPhysicsList() {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void PhysicsList::ConstructParticle()
+void OpticPhysicsList::ConstructParticle()
 {
   // In this method, static member functions should be called
   // for all particles which you want to use.
@@ -103,7 +103,7 @@ void PhysicsList::ConstructParticle()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void PhysicsList::ConstructProcess()
+void OpticPhysicsList::ConstructProcess()
 {
   AddTransportation();
   ConstructDecay();
@@ -117,7 +117,7 @@ void PhysicsList::ConstructProcess()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void PhysicsList::ConstructDecay()
+void OpticPhysicsList::ConstructDecay()
 {
   // Add Decay Process
   G4Decay* theDecayProcess = new G4Decay();
@@ -161,7 +161,7 @@ void PhysicsList::ConstructDecay()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void PhysicsList::ConstructEM()
+void OpticPhysicsList::ConstructEM()
 {
   theParticleIterator->reset();
   while( (*theParticleIterator)() ){
@@ -224,7 +224,7 @@ void PhysicsList::ConstructEM()
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 #include "G4Threading.hh"
 
-void PhysicsList::ConstructOp()
+void OpticPhysicsList::ConstructOp()
 {
   fCerenkovProcess = new G4Cerenkov("Cerenkov");
   fCerenkovProcess->SetMaxNumPhotonsPerStep(fMaxNumPhotonStep);
@@ -279,7 +279,7 @@ void PhysicsList::ConstructOp()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void PhysicsList::SetVerbose(G4int verbose)
+void OpticPhysicsList::SetVerbose(G4int verbose)
 {
   fVerboseLevel = verbose;
 
@@ -293,7 +293,7 @@ void PhysicsList::SetVerbose(G4int verbose)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void PhysicsList::SetNbOfPhotonsCerenkov(G4int MaxNumber)
+void OpticPhysicsList::SetNbOfPhotonsCerenkov(G4int MaxNumber)
 {
   fMaxNumPhotonStep = MaxNumber;
 
@@ -302,7 +302,7 @@ void PhysicsList::SetNbOfPhotonsCerenkov(G4int MaxNumber)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void PhysicsList::SetCuts()
+void OpticPhysicsList::SetCuts()
 {
   //  " G4VUserPhysicsList::SetCutsWithDefault" method sets
   //   the default cut value for all particle types

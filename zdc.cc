@@ -32,7 +32,7 @@
 #include "ActionInitialization.hh"
 #include "SharedData.hh"
 
-#include "PhysicsList.hh"
+#include "OpticPhysicsList.hh"
 #include "FTFP_BERT.hh"
 #include "QGSP_BERT.hh"
 
@@ -114,7 +114,7 @@ int main(int argc,char** argv)
   G4VModularPhysicsList* physicsList = NULL;
   if( physicsListName == "CUSTOM" ){
     std::cout << "Using CUSTOM physics list" << std::endl; 
-    runManager->SetUserInitialization( new PhysicsList );
+    runManager->SetUserInitialization( new OpticPhysicsList );
   } else if ( physicsListName == "FTFP_BERT" ) {
     std::cout << "Using FTFP_BERT physics list" << std::endl; 
     runManager->SetUserInitialization( new FTFP_BERT );    
@@ -123,7 +123,7 @@ int main(int argc,char** argv)
     runManager->SetUserInitialization( new QGSP_BERT );
   } else {   // default
     std::cout << "Using CUSTOM physics list" << std::endl; 
-    runManager->SetUserInitialization( new PhysicsList );
+    runManager->SetUserInitialization( new OpticPhysicsList );
   }
     
   // User action initialization

@@ -28,8 +28,8 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#ifndef PhysicsList_h
-#define PhysicsList_h 1
+#ifndef OpticPhysicsList_h
+#define OpticPhysicsList_h 1
 
 #include "globals.hh"
 #include "G4VModularPhysicsList.hh"
@@ -43,12 +43,12 @@ class G4OpBoundaryProcess;
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-class PhysicsList : public G4VModularPhysicsList
+class OpticPhysicsList : public G4VModularPhysicsList
 {
   public:
 
-    PhysicsList();
-    virtual ~PhysicsList();
+    OpticPhysicsList();
+    virtual ~OpticPhysicsList();
 
   public:
 
@@ -80,4 +80,4 @@ class PhysicsList : public G4VModularPhysicsList
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#endif /* PhysicsList_h */
+#endif /* OpticPhysicsList_h */
