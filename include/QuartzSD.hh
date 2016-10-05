@@ -34,6 +34,11 @@
 #include "G4VSensitiveDetector.hh"
 #include "QuartzHit.hh"
 
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TH3D.h"
+
+class SharedData;
 class G4Step;
 class G4HCofThisEvent;
 
@@ -42,7 +47,7 @@ class G4HCofThisEvent;
 class QuartzSD : public G4VSensitiveDetector
 {
 public:
-  QuartzSD(G4String);
+  QuartzSD(G4String, SharedData*);
   ~QuartzSD();
 
   void Initialize(G4HCofThisEvent*);
@@ -50,7 +55,11 @@ public:
   void EndOfEvent(G4HCofThisEvent*);
 
 private:
+  SharedData* m_sd;
+  
   QuartzHitsCollection* quartzCollection;
+
+  TH2D* h2_rodNum_eDep;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

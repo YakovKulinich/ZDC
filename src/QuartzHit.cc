@@ -53,6 +53,7 @@ QuartzHit::QuartzHit(const QuartzHit& right)
   : G4VHit()
 {
   trackID   = right.trackID;
+  modNb     = right.modNb;
   rodNb     = right.rodNb;
   edep      = right.edep;
   pos       = right.pos;
@@ -63,6 +64,7 @@ QuartzHit::QuartzHit(const QuartzHit& right)
 const QuartzHit& QuartzHit::operator=(const QuartzHit& right)
 {
   trackID   = right.trackID;
+  modNb     = right.modNb;
   rodNb     = right.rodNb;
   edep      = right.edep;
   pos       = right.pos;
@@ -97,7 +99,8 @@ void QuartzHit::Draw()
 
 void QuartzHit::Print()
 {
-  G4cout << "  trackID: " << trackID << "  rod: " << rodNb
+  G4cout << "  trackID: " << trackID
+	 << "  mod: " << modNb << "  rod: " << rodNb
 	 << "  energy deposit: " << G4BestUnit(edep,"Energy")
 	 << "  position: " << G4BestUnit(pos,"Length") << G4endl;
 }

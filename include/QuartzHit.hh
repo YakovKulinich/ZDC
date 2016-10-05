@@ -58,17 +58,20 @@ public:
 
 public:
   void setTrackID    (G4int track)        { trackID = track; };
+  void setModNb      (G4int mod)          { modNb = mod; };  
   void setRodNb      (G4int rod)          { rodNb = rod; };  
   void setEdep       (G4double de)        { edep = de; };
   void setPos        (G4ThreeVector xyz)  { pos = xyz; };
       
   G4int         getTrackID()    { return trackID; };
+  G4int         getModNb()      { return modNb; };
   G4int         getRodNb()      { return rodNb; };
   G4double      getEdep()       { return edep; };      
   G4ThreeVector getPos()        { return pos; };
       
 private:
   G4int         trackID;
+  G4int         modNb;
   G4int         rodNb;
   G4double      edep;
   G4ThreeVector pos;

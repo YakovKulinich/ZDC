@@ -31,6 +31,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #include "QuartzSD.hh"
+#include "SharedData.hh"
 
 #include "G4HCofThisEvent.hh"
 #include "G4Step.hh"
@@ -38,11 +39,25 @@
 #include "G4SDManager.hh"
 #include "G4ios.hh"
 
+#include "TString.h"
+
+#include <string>
+#include <iostream>
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-QuartzSD::QuartzSD(G4String name)
-:G4VSensitiveDetector(name){
-  collectionName.insert(name);
+QuartzSD::QuartzSD(G4String sdName, SharedData* sd)
+  :G4VSensitiveDetector(sdName), m_sd(sd){
+  collectionName.insert(sdName);
+
+  std::string name =  sdName;
+
+  // Add some histograms
+  h2_rodNum_eDep = new TH2D( Form("h2_rodNum_eDep_%s", name.c_str() ),
+				  ";rod number;eDep [keV]",
+				  14,0,14,
+				  50,0,100);
+  m_sd->AddOutputHistogram( h2_rodNum_eDep );
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -53,28 +68,36 @@ QuartzSD::~QuartzSD(){ }
 
 void QuartzSD::Initialize(G4HCofThisEvent* HCE){
   quartzCollection = new QuartzHitsCollection(SensitiveDetectorName,
-						    collectionName[0]); 
+					      collectionName[0]); 
+
+  std::string name = collectionName[0];					    
   
   static G4int HCID = -1;
   if(HCID<0)
-  { HCID = G4SDManager::GetSDMpointer()->GetCollectionID(collectionName[0]); }
-  HCE->AddHitsCollection( HCID, quartzCollection ); 
+    { HCID = G4SDManager::GetSDMpointer()->GetCollectionID( name ); }
+  HCE->AddHitsCollection( HCID, quartzCollection );
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 G4bool QuartzSD::ProcessHits(G4Step* aStep,G4TouchableHistory*){
+  
+  G4double eDep   = aStep->GetTotalEnergyDeposit();
+  G4int    modNum = aStep->GetPreStepPoint()->GetTouchableHandle()->GetCopyNumber(2);
+  G4int    rodNum = aStep->GetPreStepPoint()->GetTouchableHandle()->GetCopyNumber(0);
+
+  h2_rodNum_eDep->Fill( rodNum, eDep );
+  
   QuartzHit* newHit = new QuartzHit();
 
-  G4double edep = aStep->GetTotalEnergyDeposit();
-  
-  newHit->setTrackID   (aStep->GetTrack()->GetTrackID());
-  newHit->setRodNb     (aStep->GetPreStepPoint()->GetTouchableHandle()->GetCopyNumber() );
-  newHit->setEdep      (edep);
-  newHit->setPos       (aStep->GetPostStepPoint()->GetPosition());
+  newHit->setTrackID   ( aStep->GetTrack()->GetTrackID() );
+  newHit->setModNb     ( modNum );
+  newHit->setRodNb     ( rodNum );
+  newHit->setEdep      ( eDep );
+  newHit->setPos       ( aStep->GetPostStepPoint()->GetPosition() );
 
   quartzCollection->insert( newHit );
-
+    
   return true;
 }
 
@@ -83,7 +106,7 @@ G4bool QuartzSD::ProcessHits(G4Step* aStep,G4TouchableHistory*){
 void QuartzSD::EndOfEvent(G4HCofThisEvent*)
 {
   G4int NbHits = quartzCollection->entries();
-  if (verboseLevel>0) { 
+  if(verboseLevel>0) { 
     G4cout << "\n-------->Hits Collection: in this event they are " << NbHits 
 	   << " hits in the calorimeter cells: " << G4endl;
     for (G4int i=0;i<NbHits;i++) (*quartzCollection)[i]->Print();

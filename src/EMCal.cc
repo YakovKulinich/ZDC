@@ -575,12 +575,11 @@ void EMCal::ConstructDetector()
   //----------------------------------------------     
   // SD and Scoring Volumes
   //----------------------------------------------
-  
   G4SDManager* SDman = G4SDManager::GetSDMpointer();
 
   char quartzSDname[256];
   sprintf( quartzSDname, "QuartzSD%d", m_copyNumber);
-  QuartzSD* aQuartzSD = new QuartzSD( quartzSDname );
+  QuartzSD* aQuartzSD = new QuartzSD( quartzSDname, m_sd );
   SDman->AddNewDetector( aQuartzSD );
   m_logicQuartz->SetSensitiveDetector( aQuartzSD );
 }
