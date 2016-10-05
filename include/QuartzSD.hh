@@ -50,6 +50,8 @@ public:
   QuartzSD(G4String, SharedData*);
   ~QuartzSD();
 
+  void HistInitialize();
+ 
   void Initialize(G4HCofThisEvent*);
   G4bool ProcessHits(G4Step*, G4TouchableHistory*);
   void EndOfEvent(G4HCofThisEvent*);

@@ -49,20 +49,26 @@
 QuartzSD::QuartzSD(G4String sdName, SharedData* sd)
   :G4VSensitiveDetector(sdName), m_sd(sd){
   collectionName.insert(sdName);
-
-  std::string name =  sdName;
-
-  // Add some histograms
-  h2_rodNum_eDep = new TH2D( Form("h2_rodNum_eDep_%s", name.c_str() ),
-				  ";rod number;eDep [keV]",
-				  14,0,14,
-				  50,0,100);
-  m_sd->AddOutputHistogram( h2_rodNum_eDep );
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 QuartzSD::~QuartzSD(){ }
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void QuartzSD::HistInitialize(){
+  // G4String is strange...
+  std::string name = GetName();
+  
+  // Add some histograms
+  h2_rodNum_eDep = new TH2D( Form("h2_rodNum_eDep_%s", name.c_str() ),
+				  ";rod number;eDep [keV]",
+				  14,0,14,
+				  50,0,25);
+  m_sd->AddOutputHistogram( h2_rodNum_eDep );
+
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

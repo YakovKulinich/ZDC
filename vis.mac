@@ -30,6 +30,9 @@
 # Draw geometry:
 /vis/drawVolume
 #
+# Hits verbose
+/hits/verbose 1
+#
 # Specify view angle:
 /vis/viewer/set/viewpointVector -1 0 0
 /vis/viewer/set/lightsVector -1 0 0

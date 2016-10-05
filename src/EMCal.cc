@@ -580,6 +580,7 @@ void EMCal::ConstructDetector()
   char quartzSDname[256];
   sprintf( quartzSDname, "QuartzSD%d", m_copyNumber);
   QuartzSD* aQuartzSD = new QuartzSD( quartzSDname, m_sd );
+  aQuartzSD->HistInitialize();
   SDman->AddNewDetector( aQuartzSD );
   m_logicQuartz->SetSensitiveDetector( aQuartzSD );
 }
