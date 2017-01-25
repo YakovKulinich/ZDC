@@ -58,7 +58,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
     = particleTable->FindParticle(particleName="proton");
   m_particleGun->SetParticleDefinition(particle);
   m_particleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,-1.));
-  m_particleGun->SetParticleEnergy(50.* GeV);
+  m_particleGun->SetParticleEnergy(30.* GeV);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

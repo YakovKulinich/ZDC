@@ -245,14 +245,14 @@ void EMCal::ConstructDetector()
   //----------------------------------------------
   G4double theta               = config->GetValue( "absorberTheta", 0.5 );
   
-  G4double moduleSizeX         = config->GetValue( "moduleSizeX", 90);
-  G4double moduleSizeY         = config->GetValue( "moduleSizeY", 180);
-  G4double moduleSizeZ         = config->GetValue( "moduleSizeZ", 150);
+  G4double moduleSizeX         = config->GetValue( "moduleSizeX", 90.);
+  G4double moduleSizeY         = config->GetValue( "moduleSizeY", 180.);
+  G4double moduleSizeZ         = config->GetValue( "moduleSizeZ", 150.);
 
-  G4double housingThickness    = config->GetValue( "housingThickness", 2);
+  G4double housingThickness    = config->GetValue( "housingThickness", 2.);
     
-  G4double absorberThicknessZ  = config->GetValue( "absorberThicknessZ", 10 );
-  G4double gapThicknessZ       = config->GetValue( "gapThicknessZ", 2 );
+  G4double absorberThicknessZ  = config->GetValue( "absorberThicknessZ", 10. );
+  G4double gapThicknessZ       = config->GetValue( "gapThicknessZ", 2. );
 
   G4double reflectorThicknessZ = config->GetValue( "reflectorThicknessZ", 0.1 );
   G4double totalThicknessZ     = absorberThicknessZ + 2 * reflectorThicknessZ ;
@@ -381,7 +381,7 @@ void EMCal::ConstructDetector()
 
   std::vector< std::pair<G4double, G4double> > panelCoords;
  
-  while( zCoordPrimePanel > -0.5 * chamberSizeZprime + dZprimePanel){
+  while( zCoordPrimePanel >= -0.5 * chamberSizeZprime + dZprimePanel){
     G4double xCoord = zCoordPrimePanel * TMath::Tan( theta );;
     panelCoords.emplace_back( xCoord, zCoordPrimePanel);
     zCoordPrimePanel -= zStepPrimePanel; 
@@ -431,7 +431,20 @@ void EMCal::ConstructDetector()
 			"Absorber" );      //its name
     
   m_logicAbsorber->SetVisAttributes( absorberColor );
-    
+
+  // Absorbers go inside panel
+  // Panel has some layer of reflector around it
+  // But mostly compromised of absorber (W, or whatever)
+  m_physAbsorber =
+    new G4PVPlacement(0,                     //no rotation
+		      G4ThreeVector(),
+		      m_logicAbsorber,       //its logical volume
+		      "Absorber",            //its name
+		      m_logicPanel,          //its mother  volume
+		      false,                 //no boolean operation
+		      0,                     //copy number
+		      checkOverlaps);        //overlaps checking
+  
   for( unsigned int cn = 0; cn < panelCoords.size(); cn++ ){
     m_v_physPanel.
       push_back( new G4PVPlacement(0,
@@ -444,23 +457,12 @@ void EMCal::ConstructDetector()
 				   false,                //no boolean operation
 				   cn,                   //copy number
 				   checkOverlaps ) );      //overlaps checking
-
-    m_v_physAbsorber.
-      push_back( new G4PVPlacement(0,                     //no rotation
-				   G4ThreeVector(),
-				   m_logicAbsorber,       //its logical volume
-				   "Absorber",            //its name
-				   m_logicPanel,          //its mother  volume
-				   false,                 //no boolean operation
-				   cn,                    //copy number
-				   checkOverlaps) );      //overlaps checking
-   
   } // end loop placement
 
   //----------------------------------------------     
   // Quartz Coordinates
   //----------------------------------------------
-  G4double quartzThickness   = config->GetValue("quartzThickness", 2);
+  G4double quartzThickness   = config->GetValue("quartzThickness", 2.);
   G4double quartzSizeXPrime  = quartzThickness / TMath::Cos(theta);
   
   G4double dZprimeQuartz     =  0.5 * gapThicknessZ * TMath::Cos(theta);
@@ -469,7 +471,7 @@ void EMCal::ConstructDetector()
   
   std::vector< std::pair<G4double, G4double> > quartzCoords;
  
-  while( zCoordPrimeQuartz > -0.5 * chamberSizeZprime + dZprimeQuartz){
+  while( zCoordPrimeQuartz >= -0.5 * chamberSizeZprime + dZprimeQuartz){
     G4double xCoord = -0.5*chamberHalfSizeXprime + 0.5 * quartzSizeXPrime +
       zCoordPrimeQuartz * TMath::Tan( theta );
     quartzCoords.emplace_back( xCoord, zCoordPrimeQuartz);
@@ -522,7 +524,7 @@ void EMCal::ConstructDetector()
   
   std::vector< std::pair<G4double, G4double> > emitterCoords;
  
-  while( zCoordPrimeEmitter > -0.5 * chamberSizeZprime + dZprimeEmitter){
+  while( zCoordPrimeEmitter >= -0.5 * chamberSizeZprime + dZprimeEmitter){
     G4double xCoord = 0.5*chamberHalfSizeXprime - 0.5 * emitterThicknessPrime +
       zCoordPrimeEmitter * TMath::Tan( theta );
     emitterCoords.emplace_back( xCoord, zCoordPrimeEmitter);

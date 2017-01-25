@@ -95,7 +95,7 @@ protected:
   
   G4Para*                          m_solidAbsorber;
   G4LogicalVolume*                 m_logicAbsorber;
-  std::vector<G4VPhysicalVolume*>  m_v_physAbsorber;
+  G4VPhysicalVolume*               m_physAbsorber;
 
   G4Para*                          m_solidQuartz;
   G4LogicalVolume*                 m_logicQuartz;
